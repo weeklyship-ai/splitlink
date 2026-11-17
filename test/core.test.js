@@ -225,6 +225,31 @@ test('csv neutralises formulas', () => {
   assert.match(SL.toCSV(g), /'=HYPERLINK/);
 });
 
+test('payment info round-trips and appears in the summary', async () => {
+  const { g, a, b } = group3();
+  g.members[0].pay = '國泰 013-123456789012';
+  g.members[2].del = true;
+  exp(g, a, 300, { [a]: 1, [b]: 1 });
+  const back = await SL.decode(await SL.encode(g));
+  assert.equal(back.members[0].pay, '國泰 013-123456789012');
+  assert.equal(back.members[1].pay, undefined);
+  assert.equal(back.members[2].del, true);
+  assert.match(SL.summaryText(back), /收款資訊\nA：國泰 013-123456789012/);
+});
+
+test('merge reports records the other side is missing', () => {
+  const { g, a, b } = group3();
+  exp(g, a, 100, { [a]: 1, [b]: 1 });
+  const mine = structuredClone(g);
+  const theirs = structuredClone(g);
+  exp(mine, a, 50, { [a]: 1 });
+  exp(theirs, b, 70, { [b]: 1 });
+  const { stats } = SL.merge(mine, theirs);
+  assert.equal(stats.expensesAdded, 1);
+  assert.equal(stats.localNewer, 1);
+  assert.ok(SL.stamp(mine) >= mine.expenses.at(-1).t);
+});
+
 test('decode rejects garbage', async () => {
   await assert.rejects(SL.decode('xabc'));
   await assert.rejects(SL.decode('j' + Buffer.from('{"a":1}').toString('base64url')));

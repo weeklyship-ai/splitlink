@@ -180,7 +180,12 @@
   function mergeList(a, b) {
     const map = new Map();
     for (const x of a) map.set(x.id, x);
-    let added = 0, updated = 0;
+    let added = 0, updated = 0, localNewer = 0;
+    const remote = new Map(b.map((y) => [y.id, y]));
+    for (const x of a) {
+      const y = remote.get(x.id);
+      if (y ? (x.t || 0) > (y.t || 0) : !x.del) localNewer++;
+    }
     for (const y of b) {
       const x = map.get(y.id);
       if (!x) { map.set(y.id, y); if (!y.del) added++; }
@@ -191,7 +196,16 @@
     const seen = new Set();
     const list = [];
     for (const id of order) if (!seen.has(id)) { seen.add(id); list.push(map.get(id)); }
-    return { list, added, updated };
+    return { list, added, updated, localNewer };
+  }
+
+  /** Latest edit time anywhere in the group; used to detect unshared changes. */
+  function stamp(g) {
+    let t = g.t || 0;
+    for (const x of g.members) t = Math.max(t, x.t || 0);
+    for (const x of g.expenses) t = Math.max(t, x.t || 0);
+    for (const r of Object.values(g.rates || {})) t = Math.max(t, (r && r.t) || 0);
+    return t;
   }
 
   /**
@@ -214,7 +228,11 @@
     const e = mergeList(local.expenses, remote.expenses);
     return {
       group: { ...local, name: meta.name, base: meta.base, t: meta.t, rates, members: m.list, expenses: e.list },
-      stats: { expensesAdded: e.added, expensesUpdated: e.updated, membersAdded: m.added },
+      stats: {
+        expensesAdded: e.added, expensesUpdated: e.updated, membersAdded: m.added,
+        // records only this device has (or edited later): the other side is missing them
+        localNewer: e.localNewer + m.localNewer,
+      },
     };
   }
 
@@ -288,14 +306,24 @@
     });
     return {
       v: 2, i: g.id, n: g.name, t0, t: T(g.t), c: curs, r: rates,
-      m: g.members.map((m) => (m.del ? [m.id, m.name, T(m.t), 1] : [m.id, m.name, T(m.t)])),
+      // [id, name, t, del?, pay?] — trailing defaults dropped
+      m: g.members.map((m) => {
+        const a = [m.id, m.name, T(m.t), m.del ? 1 : 0, m.pay || ''];
+        while (a.length > 3 && !a[a.length - 1]) a.pop();
+        return a;
+      }),
       e,
     };
   }
 
   function unpack(p) {
     const T = (s) => p.t0 + parseInt(s, 36);
-    const members = p.m.map(([id, name, t, del]) => (del ? { id, name, t: T(t), del: true } : { id, name, t: T(t) }));
+    const members = p.m.map(([id, name, t, del, pay]) => {
+      const m = { id, name, t: T(t) };
+      if (del === 1) m.del = true;
+      if (pay) m.pay = pay;
+      return m;
+    });
     const mid = (i) => (members[i] || {}).id;
     const rates = {};
     for (const [c, r, t] of p.r) rates[p.c[c]] = { r, t: T(t) };
@@ -366,6 +394,8 @@
       seen.add(m.id);
       const x = { id: m.id, name: str(m.name, 40).trim() || '?', t: ts(m.t) };
       if (m.del) x.del = true;
+      const pay = str(m.pay, 80).trim();
+      if (pay) x.pay = pay;
       members.push(x);
     }
     const isMember = (id) => seen.has(id);
@@ -422,7 +452,22 @@
     const lines = [`【${group.name}】分帳結算`, `總花費 ${fmtMinor(total, group.base)}`, ''];
     if (!plan.length) lines.push('✅ 大家都已經結清了！');
     else for (const p of plan) lines.push(`${name(p.from)} → ${name(p.to)}  ${fmtMinor(p.amount, group.base)}`);
+    const payees = payeesWithInfo(group, plan);
+    if (payees.length) {
+      lines.push('', '💳 收款資訊');
+      for (const m of payees) lines.push(`${m.name}：${m.pay}`);
+    }
     return lines.join('\n');
+  }
+
+  /** Members who receive money in `plan` and have payment info, in plan order. */
+  function payeesWithInfo(group, plan) {
+    const out = [];
+    for (const p of plan) {
+      const m = group.members.find((x) => x.id === p.to);
+      if (m && m.pay && !out.includes(m)) out.push(m);
+    }
+    return out;
   }
 
   function toCSV(group) {
@@ -441,6 +486,6 @@
   return {
     CURRENCIES, CATEGORIES, decimalsOf, uid, now, newGroup, allocate, rateOf, toBaseMinor,
     expenseEffect, balances, settle, merge, encode, decode, pack, unpack, validate, liveMembers, liveExpenses,
-    fmtMinor, fmtAmount, summaryText, toCSV,
+    fmtMinor, fmtAmount, summaryText, toCSV, stamp, payeesWithInfo,
   };
 });

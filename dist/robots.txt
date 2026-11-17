@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://rax0609.github.io/splitlink/sitemap.xml

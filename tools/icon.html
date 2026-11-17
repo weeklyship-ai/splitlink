@@ -1,0 +1,18 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><style>
+html,body{margin:0;overflow:hidden;background:#1f7a5a}
+svg{display:block}
+</style></head><body>
+<!-- Full-bleed (maskable-safe): symbol stays inside the central 60%. Size in px via ?s= -->
+<svg id="i" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#1f7a5a"/>
+  <g transform="rotate(-45 256 256)" fill="none" stroke-width="34" stroke-linecap="round">
+    <rect x="118" y="206" width="170" height="100" rx="50" stroke="#ffffff"/>
+    <rect x="224" y="206" width="170" height="100" rx="50" stroke="#bfe8d5"/>
+  </g>
+</svg>
+<script>
+const s = new URLSearchParams(location.search).get('s') || 512;
+const el = document.getElementById('i'); el.setAttribute('width', s); el.setAttribute('height', s);
+</script>
+</body></html>

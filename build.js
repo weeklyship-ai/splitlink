@@ -28,6 +28,19 @@ const out = path.join(__dirname, 'dist');
 fs.mkdirSync(out, { recursive: true });
 fs.writeFileSync(path.join(out, 'index.html'), html);
 fs.writeFileSync(path.join(out, 'embed.html'), embed);
+
+// PWA + social assets
+const version = require('crypto').createHash('sha256').update(html).digest('hex').slice(0, 10);
+fs.writeFileSync(path.join(out, 'sw.js'), src('sw.js').replace('__VERSION__', version));
+for (const f of ['manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'og.png']) {
+  fs.copyFileSync(path.join(__dirname, 'src', f), path.join(out, f));
+}
+fs.writeFileSync(path.join(out, '.nojekyll'), '');
+fs.writeFileSync(path.join(out, 'robots.txt'), 'User-agent: *\nAllow: /\nSitemap: https://rax0609.github.io/splitlink/sitemap.xml\n');
+fs.writeFileSync(path.join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://rax0609.github.io/splitlink/</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url></urlset>
+`);
+console.log(`sw version ${version}`);
 for (const f of ['index.html', 'embed.html']) {
   console.log(`dist/${f}  ${(fs.statSync(path.join(out, f)).size / 1024).toFixed(1)} KB`);
 }
