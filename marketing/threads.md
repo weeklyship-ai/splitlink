@@ -1,6 +1,6 @@
 # Threads 宣傳計畫
 
-網址：https://rax0609.github.io/splitlink/
+網址：https://weeklyship-ai.github.io/splitlink/
 （連結預覽會顯示 og.png：「一條連結就能分帳」＋結算卡片）
 
 ## 發文節奏
@@ -37,7 +37,7 @@
 > ・一鍵產生結算圖片，附上收款帳號
 > ・資料不會上傳到任何伺服器
 >
-> 👉 rax0609.github.io/splitlink
+> 👉 weeklyship-ai.github.io/splitlink
 >
 > 有分帳需求的人可以幫忙試試看，哪裡不好用就直接留言，它會繼續改 🙏
 
@@ -52,7 +52,7 @@
 > ✅ 有人吃兩人份，可以按份數分
 > ✅ 最後一鍵產生「誰該給誰多少」的圖片，直接傳到 LINE
 >
-> rax0609.github.io/splitlink
+> weeklyship-ai.github.io/splitlink
 >
 > 下次出國可以試試，用完回來跟我說好不好用 🙌
 
@@ -67,5 +67,5 @@
 >
 > 每個人各自記帳，把連結傳回來時，每筆紀錄以最後修改的為準自動合併，刪除也會同步。
 >
-> 原始碼開源 👉 github.com/rax0609/splitlink
-> 直接用 👉 rax0609.github.io/splitlink
+> 原始碼開源 👉 github.com/weeklyship-ai/splitlink
+> 直接用 👉 weeklyship-ai.github.io/splitlink

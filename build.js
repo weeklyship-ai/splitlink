@@ -36,9 +36,9 @@ for (const f of ['manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-
   fs.copyFileSync(path.join(__dirname, 'src', f), path.join(out, f));
 }
 fs.writeFileSync(path.join(out, '.nojekyll'), '');
-fs.writeFileSync(path.join(out, 'robots.txt'), 'User-agent: *\nAllow: /\nSitemap: https://rax0609.github.io/splitlink/sitemap.xml\n');
+fs.writeFileSync(path.join(out, 'robots.txt'), 'User-agent: *\nAllow: /\nSitemap: https://weeklyship-ai.github.io/splitlink/sitemap.xml\n');
 fs.writeFileSync(path.join(out, 'sitemap.xml'), `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://rax0609.github.io/splitlink/</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url></urlset>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://weeklyship-ai.github.io/splitlink/</loc><lastmod>${new Date().toISOString().slice(0, 10)}</lastmod></url></urlset>
 `);
 console.log(`sw version ${version}`);
 for (const f of ['index.html', 'embed.html']) {

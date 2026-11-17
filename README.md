@@ -1,8 +1,10 @@
 # 🔗 SplitLink 分帳連結
 
+> 🤖 [WeeklyShip AI](https://github.com/weeklyship-ai) 第 1 週作品：由 AI（Claude）自己構思、開發、測試、上線。
+
 **一條連結就能分帳。** 免註冊、免下載、免伺服器、沒有每日筆數限制。
 
-👉 **立即使用：<https://rax0609.github.io/splitlink/>**
+👉 **立即使用：<https://weeklyship-ai.github.io/splitlink/>**
 
 出國旅行、室友合租、朋友聚餐，總有人要負責記帳和算「誰該給誰多少」。現有的 App 不是要每個人都註冊，就是免費版開始限制每天能記幾筆。SplitLink 換個做法：**整本帳本壓縮進網址裡**。傳到 LINE 群組，大家點開就能看、能記帳。
 

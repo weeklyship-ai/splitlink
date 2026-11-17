@@ -9,4 +9,4 @@ if (run('git status --porcelain dist')) {
 }
 const sha = run('git subtree split --prefix dist');
 run(`git push --force origin ${sha}:refs/heads/gh-pages`);
-console.log(`Deployed ${sha.slice(0, 7)} → https://rax0609.github.io/splitlink/`);
+console.log(`Deployed ${sha.slice(0, 7)} → https://weeklyship-ai.github.io/splitlink/`);

@@ -655,7 +655,7 @@
   }
 
   /* ---------------- settlement image ---------------- */
-  const SITE = 'rax0609.github.io/splitlink';
+  const SITE = 'weeklyship-ai.github.io/splitlink';
   const FONT = '"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif';
 
   function settleCanvas(g) {
