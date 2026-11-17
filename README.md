@@ -2,6 +2,8 @@
 
 **一條連結就能分帳。** 免註冊、免下載、免伺服器、沒有每日筆數限制。
 
+👉 **立即使用：<https://rax0609.github.io/splitlink/>**
+
 出國旅行、室友合租、朋友聚餐，總有人要負責記帳和算「誰該給誰多少」。現有的 App 不是要每個人都註冊，就是免費版開始限制每天能記幾筆。SplitLink 換個做法：**整本帳本壓縮進網址裡**。傳到 LINE 群組，大家點開就能看、能記帳。
 
 ## 特色
@@ -36,6 +38,7 @@ v2 精簡格式（成員用索引、時間戳記用 base36 差值、平分用位
 npm test          # 單元測試（node:test，零相依套件）
 npm run serve     # http://localhost:5173 開發伺服器
 npm run build     # 打包成單一檔案 dist/index.html
+npm run deploy    # 打包並發布 dist/ 到 gh-pages 分支（GitHub Pages）
 ```
 
 ```
