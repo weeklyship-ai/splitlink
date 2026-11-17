@@ -1,0 +1,12 @@
+{
+  "name": "splitlink",
+  "version": "1.0.0",
+  "description": "No-signup, serverless group expense splitter. The whole ledger lives in a shareable link.",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test \"test/*.test.js\"",
+    "build": "node build.js",
+    "serve": "node serve.js"
+  }
+}
