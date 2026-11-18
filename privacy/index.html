@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f7a5a">
+<link rel="icon" type="image/png" href="/splitlink/icon-192.png">
+<link rel="apple-touch-icon" href="/splitlink/apple-touch-icon.png">
+<link rel="manifest" href="/splitlink/manifest.webmanifest">
+<link rel="stylesheet" href="/splitlink/site.css">
+<script>document.documentElement.classList.add('js');try{var t=localStorage.getItem('splitlink:theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<title>隱私權政策｜SplitLink 分帳連結</title>
+<meta name="description" content="SplitLink 沒有伺服器、沒有帳號、沒有追蹤。說明帳本資料存在哪裡、哪些情況會連到第三方服務。">
+<link rel="canonical" href="https://weeklyship-ai.github.io/splitlink/privacy/">
+</head>
+<body>
+<a class="skip" href="#main">跳到主要內容</a>
+<header class="nav" id="nav">
+  <div class="container nav-in">
+    <a class="brand" href="/splitlink/?home"><img src="/splitlink/icon-192.png" alt="" width="30" height="30">SplitLink <small>分帳連結</small></a>
+    <nav class="nav-links" aria-label="主選單">
+      <a href="/splitlink/?home#features">特色</a>
+      <a href="/splitlink/?home#how">怎麼用</a>
+      <a href="/splitlink/?home#privacy">隱私</a>
+      <a href="/splitlink/?home#faq">常見問題</a>
+    </nav>
+    <a class="btn primary sm" href="/splitlink/app/">開始分帳</a>
+  </div>
+</header>
+<main id="main" class="container">
+  <article class="legal">
+    <span class="kicker">Privacy Policy</span>
+    <h1>隱私權政策</h1>
+    <p class="upd">生效日期：2026 年 11 月 18 日・最後更新：2026 年 11 月 18 日</p>
+
+    <div class="tldr"><b>一句話版本：</b>SplitLink 沒有後端伺服器、沒有帳號系統，也沒有放任何分析或廣告追蹤。你的帳本只存在你的瀏覽器和你分享出去的連結裡，我們看不到。</div>
+
+    <h2>1. 這份政策適用的範圍</h2>
+    <p>本政策適用於 SplitLink 分帳連結（網址 https://weeklyship-ai.github.io/splitlink/ 及其子頁面，以下簡稱「本服務」）。本服務由 WeeklyShip AI（以下簡稱「我們」）提供，是一個在瀏覽器中執行的開源網頁工具。</p>
+
+    <h2>2. 我們不蒐集的資料</h2>
+    <ul>
+      <li>我們不要求、也不保存你的姓名、Email、電話或任何帳號資料。</li>
+      <li>我們沒有資料庫，不會收到你輸入的群組名稱、成員名稱、金額、收款資訊或任何帳目內容。</li>
+      <li>本服務不使用 Cookie，也沒有放 Google Analytics、Meta Pixel 或其他追蹤與廣告工具。</li>
+    </ul>
+
+    <h2>3. 你的帳本資料存在哪裡</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>位置</th><th>存放的內容</th><th>誰看得到</th></tr></thead>
+      <tbody>
+        <tr><td>你的瀏覽器（localStorage）</td><td>你建立或加入的群組、你在每個群組選擇的身分、深淺色設定</td><td>只有使用這台裝置、這個瀏覽器的人</td></tr>
+        <tr><td>分享連結（網址 <code>#</code> 後面的部分）</td><td>整個群組帳本（壓縮後），包含成員名稱、帳目與成員自行填寫的收款資訊</td><td>任何拿到這條連結的人</td></tr>
+        <tr><td>你匯出的 CSV／JSON／圖片</td><td>你選擇匯出的帳本內容</td><td>你自行決定</td></tr>
+      </tbody>
+    </table></div>
+    <p>依照網頁標準，瀏覽器開啟網址時不會把 <code>#</code> 後面的內容傳送給伺服器，因此託管網站的 GitHub 也收不到帳本內容。</p>
+    <p><b>請注意：</b>拿到分享連結的人就能看到並修改（在他自己的裝置上）整本帳本。請只把連結分享給相關的人，並避免在收款資訊欄位填寫密碼、完整身分證字號等敏感資料。</p>
+
+    <h2>4. 會連線到第三方的情況</h2>
+    <ul>
+      <li><b>網站託管：GitHub Pages。</b>你開啟本服務時，瀏覽器會向 GitHub 的伺服器下載網頁檔案。GitHub 可能會依其政策記錄 IP 位址等連線資訊，詳見 <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub 隱私權聲明</a>。我們無法取得這些紀錄。</li>
+      <li><b>QR Code 函式庫：cdnjs（Cloudflare）。</b>只有在你打開「分享」視窗時，瀏覽器才會從 cdnjs.cloudflare.com 下載 QR Code 產生程式。帳本內容不會傳給 cdnjs，QR Code 是在你的裝置上產生的。</li>
+      <li><b>匯率服務：open.er-api.com。</b>只有在你按下「抓取最新匯率」時，才會連線到這個服務，並且只送出主幣別代碼（例如 TWD）。</li>
+    </ul>
+
+    <h2>5. 資料保存與刪除</h2>
+    <p>瀏覽器裡的資料會一直保留，直到你在 App 的「設定 → 從這台裝置刪除群組」刪除，或清除瀏覽器的網站資料為止。已經傳出去的分享連結由收到的人保管，我們無法替你收回或刪除。</p>
+
+    <h2>6. 兒童隱私</h2>
+    <p>本服務不會刻意蒐集任何人的個人資料，包括兒童。</p>
+
+    <h2>7. 政策變更</h2>
+    <p>如果本服務的資料處理方式有所改變，我們會更新本頁面與「最後更新」日期。重大變更會在首頁提示。</p>
+
+    <h2>8. 聯絡我們</h2>
+    <p>對本政策有任何疑問，請寄信到 <a href="mailto:weeklyship@futuracept.com">weeklyship@futuracept.com</a>，或在 <a href="https://github.com/weeklyship-ai/splitlink/issues">GitHub</a> 提出。</p>
+  </article>
+</main>
+<footer class="foot">
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="/splitlink/?home"><img src="/splitlink/icon-192.png" alt="" width="30" height="30">SplitLink</a>
+        <p style="margin:10px 0 0;max-width:28em">免註冊、免下載的分帳工具。整本帳都在一條連結裡，資料不會上傳到任何伺服器。</p>
+      </div>
+      <div>
+        <h4>產品</h4>
+        <ul>
+          <li><a href="/splitlink/app/">開始分帳</a></li>
+          <li><a href="/splitlink/app/?demo">範例帳本</a></li>
+          <li><a href="/splitlink/?home#faq">常見問題</a></li>
+          <li><a href="https://github.com/weeklyship-ai/splitlink">原始碼（GitHub）</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>關於</h4>
+        <ul>
+          <li><a href="/splitlink/terms/">服務條款</a></li>
+          <li><a href="/splitlink/privacy/">隱私權政策</a></li>
+          <li><a href="https://github.com/weeklyship-ai/splitlink/issues/new">回報問題／許願</a></li>
+          <li><a href="mailto:weeklyship@futuracept.com">聯絡我們</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="made">
+      <span>© 2026 WeeklyShip AI · MIT 授權開源</span>
+      <span>🤖 <a href="https://weeklyship-ai.github.io/">WeeklyShip AI</a> 第 01 週作品：由 AI 構思、開發、維護</span>
+    </div>
+  </div>
+</footer>
+<script>
+(() => {
+  const nav = document.getElementById('nav');
+  if (nav) { const f = () => nav.classList.toggle('scrolled', scrollY > 8); f(); addEventListener('scroll', f, { passive: true }); }
+  const els = document.querySelectorAll('.rv');
+  if (!('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('in')); return; }
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+  els.forEach((e) => io.observe(e));
+})();
+</script>
+</body>
+</html>

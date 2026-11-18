@@ -1,11 +1,25 @@
 <!doctype html>
 <html lang="zh-Hant-TW">
 <head>
+<script>
+// Shared ledger links (old /splitlink/#g=… and new ones) open the app; returning users skip the landing page unless they ask for it with ?home.
+(function () {
+  var h = location.hash;
+  if (/[#&]g=/.test(h)) { location.replace('app/' + h); return; }
+  if (/[?&]home\b/.test(location.search)) return;
+  try { var d = JSON.parse(localStorage.getItem('splitlink:v1') || 'null'); if (d && d.groups && Object.keys(d.groups).length) location.replace('app/'); } catch (e) {}
+})();
+</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>SplitLink 分帳連結｜免註冊，一條連結就能分帳</title>
-<meta name="description" content="免註冊、免下載、沒有筆數限制的分帳工具。整本帳都在一條連結裡，傳到 LINE 群組就能一起記帳，自動算出最少轉帳，還能產生結算圖片。">
 <meta name="theme-color" content="#1f7a5a">
+<link rel="icon" type="image/png" href="/splitlink/icon-192.png">
+<link rel="apple-touch-icon" href="/splitlink/apple-touch-icon.png">
+<link rel="manifest" href="/splitlink/manifest.webmanifest">
+<link rel="stylesheet" href="/splitlink/site.css">
+<script>document.documentElement.classList.add('js');try{var t=localStorage.getItem('splitlink:theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<title>SplitLink 分帳連結｜免註冊、免下載，一條連結就能分帳</title>
+<meta name="description" content="出國旅遊、室友、聚餐的分帳工具。不用註冊、不用下載 App、沒有每日筆數限制。整本帳都在一條連結裡，丟到 LINE 群組大家一起記，自動算出最少轉帳。">
 <link rel="canonical" href="https://weeklyship-ai.github.io/splitlink/">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="SplitLink 分帳連結">
@@ -18,1589 +32,199 @@
 <meta property="og:locale" content="zh_TW">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://weeklyship-ai.github.io/splitlink/og.png">
-<link rel="icon" type="image/png" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="manifest" href="manifest.webmanifest">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="SplitLink">
-<style>
-:root {
-  --bg: #f6f5f1;
-  --surface: #ffffff;
-  --surface-2: #f0eee8;
-  --text: #1d1c1a;
-  --muted: #6f6b63;
-  --line: #e4e1d9;
-  --accent: #1f7a5a;
-  --accent-ink: #ffffff;
-  --accent-soft: #e2f1ea;
-  --pos: #1f7a5a;
-  --neg: #c2412d;
-  --neg-soft: #fbe9e5;
-  --warn-soft: #fff4d6;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 6px 20px rgb(0 0 0 / 0.06);
-  --radius: 14px;
-  color-scheme: light;
-}
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #141412; --surface: #1d1d1a; --surface-2: #26261f; --text: #efede6; --muted: #a29e93;
-    --line: #34332d; --accent: #4cc596; --accent-ink: #0d1f17; --accent-soft: #1b3a2d; --pos: #4cc596;
-    --neg: #ff8a73; --neg-soft: #3d221c; --warn-soft: #3a3118; --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
-    color-scheme: dark;
-  }
-}
-:root[data-theme="dark"] {
-  --bg: #141412; --surface: #1d1d1a; --surface-2: #26261f; --text: #efede6; --muted: #a29e93;
-  --line: #34332d; --accent: #4cc596; --accent-ink: #0d1f17; --accent-soft: #1b3a2d; --pos: #4cc596;
-  --neg: #ff8a73; --neg-soft: #3d221c; --warn-soft: #3a3118; --shadow: 0 1px 2px rgb(0 0 0 / 0.4);
-  color-scheme: dark;
-}
-
-* { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0; background: var(--bg); color: var(--text);
-  font: 15px/1.5 system-ui, -apple-system, "Segoe UI", "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
-  -webkit-tap-highlight-color: transparent;
-}
-button, input, select, textarea { font: inherit; color: inherit; }
-button { cursor: pointer; }
-.wrap { max-width: 640px; margin: 0 auto; padding: 0 16px 120px; }
-.num { font-variant-numeric: tabular-nums; }
-.muted { color: var(--muted); }
-.small { font-size: 13px; }
-.pos { color: var(--pos); }
-.neg { color: var(--neg); }
-.row { display: flex; align-items: center; gap: 10px; }
-.grow { flex: 1; min-width: 0; }
-.ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.hidden { display: none !important; }
-
-/* top bar */
-.top { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); }
-.top-in { max-width: 640px; margin: 0 auto; padding: 12px 16px 8px; display: flex; align-items: center; gap: 8px; }
-.top h1 { font-size: 19px; margin: 0; letter-spacing: 0.01em; }
-.icon-btn { border: 0; background: transparent; width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
-.icon-btn:hover { background: var(--surface-2); }
-
-.tabs { max-width: 640px; margin: 0 auto; padding: 0 16px 8px; display: flex; gap: 6px; overflow-x: auto; }
-.tab { border: 0; background: transparent; padding: 7px 14px; border-radius: 999px; color: var(--muted); white-space: nowrap; }
-.tab.on { background: var(--text); color: var(--bg); }
-
-/* cards */
-.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; margin: 12px 0; }
-.card h3 { margin: 0 0 10px; font-size: 15px; }
-.list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-.item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--line); width: 100%; text-align: left; background: none; border-left: 0; border-right: 0; border-bottom: 0; }
-.item:first-child { border-top: 0; }
-button.item:hover { background: var(--surface-2); }
-.ico { width: 38px; height: 38px; flex: none; border-radius: 11px; background: var(--surface-2); display: grid; place-items: center; font-size: 19px; }
-.amt { text-align: right; flex: none; }
-.amt b { display: block; font-weight: 600; }
-.day { font-size: 12px; color: var(--muted); margin: 18px 4px 6px; font-weight: 600; }
-
-.hero { padding: 26px 4px 6px; }
-.hero h2 { font-size: 26px; margin: 0 0 6px; line-height: 1.25; }
-.hero p { margin: 0; color: var(--muted); }
-.feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 16px 0; }
-.feat { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 12px; font-size: 13px; color: var(--muted); }
-.feat b { display: block; color: var(--text); font-size: 14px; margin-bottom: 2px; }
-
-.mebar { display: flex; align-items: center; gap: 8px; margin: 4px 0 2px; flex-wrap: wrap; }
-.chip { border: 1px solid var(--line); background: var(--surface); padding: 5px 12px; border-radius: 999px; font-size: 13px; }
-.chip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--text); font-weight: 600; }
-
-.summary { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 12px 0; }
-.stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; }
-.stat .k { font-size: 12px; color: var(--muted); }
-.stat .v { font-size: 20px; font-weight: 650; margin-top: 2px; }
-
-.banner { background: var(--warn-soft); border-radius: 12px; padding: 10px 14px; margin: 12px 0; font-size: 14px; }
-
-/* buttons */
-.btn { border: 1px solid var(--line); background: var(--surface); padding: 10px 16px; border-radius: 12px; font-weight: 550; }
-.btn:hover { background: var(--surface-2); }
-.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
-.btn.primary:hover { filter: brightness(1.06); }
-.btn.danger { color: var(--neg); }
-.btn.sm { padding: 6px 12px; font-size: 13px; border-radius: 10px; }
-.btn.block { width: 100%; }
-.btns { display: flex; gap: 8px; flex-wrap: wrap; }
-.fab { position: fixed; right: max(16px, calc(50vw - 304px)); bottom: calc(20px + env(safe-area-inset-bottom)); z-index: 6;
-  border: 0; background: var(--accent); color: var(--accent-ink); font-weight: 650; padding: 14px 20px; border-radius: 999px; box-shadow: var(--shadow); font-size: 15px; }
-
-/* bars */
-.bar { height: 8px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin-top: 6px; position: relative; }
-.bar i { display: block; height: 100%; background: var(--accent); border-radius: 99px; }
-.dbar { height: 10px; position: relative; margin-top: 6px; }
-.dbar::before { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--line); }
-.dbar i { position: absolute; top: 0; height: 100%; border-radius: 99px; }
-.dbar i.p { left: 50%; background: var(--pos); }
-.dbar i.n { right: 50%; background: var(--neg); }
-
-/* sheet */
-.scrim { position: fixed; inset: 0; background: rgb(0 0 0 / 0.38); z-index: 20; display: flex; align-items: flex-end; justify-content: center; animation: fade .15s ease; }
-.sheet { background: var(--surface); width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; border-radius: 20px 20px 0 0; padding: 8px 18px calc(20px + env(safe-area-inset-bottom)); animation: up .2s ease; }
-@media (min-width: 700px) { .scrim { align-items: center; } .sheet { border-radius: 20px; } }
-.sheet-h { display: flex; align-items: center; justify-content: space-between; position: sticky; top: -8px; background: var(--surface); padding: 10px 0 8px; z-index: 1; }
-.sheet-h h2 { font-size: 18px; margin: 0; }
-@keyframes up { from { transform: translateY(30px); opacity: 0; } }
-@keyframes fade { from { opacity: 0; } }
-
-/* forms */
-label.f { display: block; margin: 12px 0; }
-label.f > span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; }
-.in { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 11px; padding: 10px 12px; outline: none; }
-.in:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.in.big { font-size: 26px; font-weight: 650; padding: 8px 12px; }
-textarea.in { resize: vertical; min-height: 84px; }
-.two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.amtrow { display: grid; grid-template-columns: 1fr 110px; gap: 8px; }
-.seg { display: flex; background: var(--surface-2); padding: 3px; border-radius: 11px; gap: 2px; }
-.seg button { flex: 1; border: 0; background: transparent; padding: 7px 4px; border-radius: 9px; color: var(--muted); font-size: 14px; }
-.seg button.on { background: var(--surface); color: var(--text); font-weight: 600; box-shadow: 0 1px 2px rgb(0 0 0 / 0.1); }
-.cats { display: flex; flex-wrap: wrap; gap: 6px; }
-.cats button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 5px 10px; font-size: 13px; }
-.cats button.on { border-color: var(--accent); background: var(--accent-soft); font-weight: 600; }
-.split-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
-.split-row:first-child { border-top: 0; }
-.split-row input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--accent); }
-.split-row .in { width: 96px; padding: 6px 8px; text-align: right; }
-.split-hint { font-size: 13px; margin-top: 6px; }
-.err { color: var(--neg); font-size: 13px; min-height: 18px; margin-top: 6px; }
-.linkbox { word-break: break-all; font-size: 12px; font-family: ui-monospace, Consolas, monospace; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 10px; max-height: 110px; overflow: auto; }
-.qr { display: grid; place-items: center; margin: 12px 0; }
-.qr img, .qr svg { width: 200px; height: 200px; background: #fff; padding: 8px; border-radius: 12px; }
-
-.mem-row { display: grid; gap: 6px; padding: 10px 0; border-top: 1px solid var(--line); }
-.mem-row:first-of-type { border-top: 0; }
-.mem-row .in.small { padding: 7px 10px; font-size: 13px; }
-.paychip { display: inline-block; margin-top: 4px; border: 1px dashed var(--accent); background: transparent; color: var(--text); border-radius: 8px; padding: 3px 8px; font-size: 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
-.share-btn { position: relative; }
-.share-btn .dot { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border-radius: 50%; background: var(--neg); border: 2px solid var(--bg); }
-.settle-img { width: 100%; border-radius: 12px; border: 1px solid var(--line); display: block; margin-bottom: 8px; }
-.steps { padding-left: 20px; line-height: 1.9; }
-.toast { position: fixed; left: 50%; bottom: calc(90px + env(safe-area-inset-bottom)); transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 12px; z-index: 40; font-size: 14px; max-width: calc(100vw - 32px); box-shadow: var(--shadow); animation: up .2s ease; }
-.empty { text-align: center; padding: 40px 16px; color: var(--muted); }
-.empty .big { font-size: 40px; }
-footer.foot { text-align: center; font-size: 12px; color: var(--muted); margin-top: 30px; }
-</style>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+{"@type":"WebApplication","name":"SplitLink 分帳連結","url":"https://weeklyship-ai.github.io/splitlink/","applicationCategory":"FinanceApplication","operatingSystem":"Any (web browser)","inLanguage":"zh-Hant-TW","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"TWD"},"description":"免註冊、免下載的分帳工具。整本帳都在一條連結裡，自動算出最少轉帳。","creator":{"@type":"Organization","name":"WeeklyShip AI","url":"https://weeklyship-ai.github.io/"}},
+{"@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"真的完全免費嗎？","acceptedAnswer":{"@type":"Answer","text":"是的。沒有付費版、沒有廣告，也沒有筆數限制。程式碼以 MIT 授權開源。"}},
+{"@type":"Question","name":"我的帳本資料存在哪裡？","acceptedAnswer":{"@type":"Answer","text":"存在你的瀏覽器裡，以及你分享出去的連結裡。SplitLink 沒有後端伺服器，網址 # 後面的內容不會被送到任何伺服器。"}},
+{"@type":"Question","name":"朋友需要下載 App 或註冊嗎？","acceptedAnswer":{"@type":"Answer","text":"不需要。朋友點開連結就能看帳、記帳，用手機或電腦的瀏覽器都可以。"}}
+]}]}
+</script>
 </head>
 <body>
-<div id="app"></div>
-<noscript>SplitLink 需要啟用 JavaScript。</noscript>
-<script>
-/*
- * SplitLink core — pure logic, no DOM.
- * Works in browsers (window.SL) and Node (module.exports).
- *
- * Money model: every amount is converted to the group's base currency and
- * handled as integer minor units, so balances always sum to exactly zero.
- */
-(function (root, factory) {
-  const api = factory();
-  if (typeof module === 'object' && module.exports) module.exports = api;
-  else root.SL = api;
-})(typeof self !== 'undefined' ? self : this, function () {
-  'use strict';
-
-  const ZERO_DECIMAL = new Set(['TWD', 'JPY', 'KRW', 'VND', 'IDR', 'CLP', 'ISK', 'HUF']);
-  const decimalsOf = (cur) => (ZERO_DECIMAL.has(cur) ? 0 : 2);
-
-  const CURRENCIES = {
-    TWD: 'NT$', USD: 'US$', JPY: '¥', KRW: '₩', EUR: '€', GBP: '£', CNY: 'CN¥',
-    HKD: 'HK$', MOP: 'MOP$', SGD: 'S$', MYR: 'RM', THB: '฿', VND: '₫', PHP: '₱',
-    IDR: 'Rp', AUD: 'A$', NZD: 'NZ$', CAD: 'C$', CHF: 'CHF', ISK: 'kr', HUF: 'Ft',
-  };
-
-  const CATEGORIES = [
-    { id: 'food', icon: '🍜', label: '餐飲' },
-    { id: 'transport', icon: '🚕', label: '交通' },
-    { id: 'stay', icon: '🏨', label: '住宿' },
-    { id: 'fun', icon: '🎡', label: '娛樂' },
-    { id: 'shop', icon: '🛍️', label: '購物' },
-    { id: 'grocery', icon: '🛒', label: '日用' },
-    { id: 'bill', icon: '🧾', label: '帳單' },
-    { id: 'other', icon: '📦', label: '其他' },
-  ];
-
-  function uid() {
-    const a = new Uint8Array(8);
-    (globalThis.crypto || require('crypto').webcrypto).getRandomValues(a);
-    return Array.from(a, (b) => b.toString(36).padStart(2, '0')).join('').slice(0, 8);
-  }
-
-  function now() { return Date.now(); }
-
-  function newGroup(name, base = 'TWD', memberNames = []) {
-    const t = now();
-    return {
-      v: 1,
-      id: uid(),
-      name: name || '新群組',
-      base,
-      t, // meta (name/base) last-write timestamp
-      rates: {}, // { USD: { r: 31.5, t } } => 1 USD = 31.5 base
-      members: memberNames.filter(Boolean).map((n) => ({ id: uid(), name: n.trim(), t })),
-      expenses: [],
-    };
-  }
-
-  /* ---------- allocation ---------- */
-
-  /**
-   * Split integer `total` according to weights using the largest-remainder
-   * method. Result sums exactly to total; ties go to earlier entries.
-   * @param {number} total integer (may be negative)
-   * @param {Array<[string, number]>} weights [[id, weight], ...]
-   * @returns {Object<string, number>}
-   */
-  function allocate(total, weights) {
-    const ws = weights.filter(([, w]) => w > 0);
-    const out = {};
-    if (!ws.length) return out;
-    const sign = total < 0 ? -1 : 1;
-    const abs = Math.abs(total);
-    const sum = ws.reduce((s, [, w]) => s + w, 0);
-    let used = 0;
-    const rema = ws.map(([id, w], i) => {
-      const exact = (abs * w) / sum;
-      const fl = Math.floor(exact + 1e-9);
-      used += fl;
-      out[id] = fl;
-      return { id, r: exact - fl, i };
-    });
-    let left = abs - used;
-    rema.sort((a, b) => b.r - a.r || a.i - b.i);
-    for (let k = 0; left > 0; k = (k + 1) % rema.length, left--) out[rema[k].id] += 1;
-    if (sign < 0) for (const id in out) out[id] = -out[id];
-    return out;
-  }
-
-  function rateOf(group, cur) {
-    if (cur === group.base) return 1;
-    const r = group.rates[cur];
-    return r && r.r > 0 ? r.r : null;
-  }
-
-  /** Expense amount in base-currency minor units, or null if no rate. */
-  function toBaseMinor(group, amount, cur) {
-    const rate = rateOf(group, cur);
-    if (rate == null) return null;
-    return Math.round(amount * rate * 10 ** decimalsOf(group.base));
-  }
-
-  function liveMembers(group) { return group.members.filter((m) => !m.del); }
-  function liveExpenses(group) { return group.expenses.filter((e) => !e.del); }
-
-  /**
-   * Per-member effect of one expense in base minor units.
-   * Returns { paid: {id: n}, owed: {id: n}, total } or null if unconvertible.
-   */
-  function expenseEffect(group, e) {
-    const total = toBaseMinor(group, e.amount, e.cur);
-    if (total == null) return null;
-    const paid = { [e.payer]: total };
-    let owed;
-    if (e.kind === 'transfer') {
-      owed = { [e.to]: total };
-    } else {
-      const order = group.members.map((m) => m.id);
-      const parts = e.split && e.split.parts ? e.split.parts : {};
-      const weights = order.filter((id) => parts[id] > 0).map((id) => [id, Number(parts[id])]);
-      owed = allocate(total, weights);
-      // No valid participants: treat as the payer's own expense so the ledger stays balanced.
-      if (!Object.keys(owed).length) owed = { [e.payer]: total };
-    }
-    return { paid, owed, total };
-  }
-
-  /**
-   * Balances: positive = others owe this member; negative = member owes.
-   * Also returns paid (cash out of pocket) and consumed (fair share) per member.
-   */
-  function balances(group) {
-    const bal = {}, paid = {}, consumed = {};
-    for (const m of group.members) { bal[m.id] = 0; paid[m.id] = 0; consumed[m.id] = 0; }
-    const missingRates = new Set();
-    for (const e of liveExpenses(group)) {
-      const fx = expenseEffect(group, e);
-      if (!fx) { missingRates.add(e.cur); continue; }
-      for (const [id, v] of Object.entries(fx.paid)) {
-        bal[id] = (bal[id] || 0) + v;
-        if (e.kind !== 'transfer') paid[id] = (paid[id] || 0) + v;
-      }
-      for (const [id, v] of Object.entries(fx.owed)) {
-        bal[id] = (bal[id] || 0) - v;
-        if (e.kind !== 'transfer') consumed[id] = (consumed[id] || 0) + v;
-      }
-    }
-    return { bal, paid, consumed, missingRates: [...missingRates] };
-  }
-
-  /**
-   * Minimal-ish settlement plan: greedily match the largest debtor with the
-   * largest creditor. Produces at most n-1 transfers.
-   * @returns {Array<{from, to, amount}>} amounts in base minor units
-   */
-  function settle(bal) {
-    const cred = [], debt = [];
-    for (const [id, v] of Object.entries(bal)) {
-      if (v > 0) cred.push({ id, v });
-      else if (v < 0) debt.push({ id, v: -v });
-    }
-    const plan = [];
-    // First pass: exact matches avoid needless chains.
-    for (const d of debt) {
-      const c = cred.find((x) => x.v === d.v && x.v > 0);
-      if (c && d.v > 0) { plan.push({ from: d.id, to: c.id, amount: d.v }); c.v = 0; d.v = 0; }
-    }
-    for (;;) {
-      cred.sort((a, b) => b.v - a.v);
-      debt.sort((a, b) => b.v - a.v);
-      const c = cred[0], d = debt[0];
-      if (!c || !d || c.v === 0 || d.v === 0) break;
-      const x = Math.min(c.v, d.v);
-      plan.push({ from: d.id, to: c.id, amount: x });
-      c.v -= x; d.v -= x;
-    }
-    return plan;
-  }
-
-  /* ---------- merge (offline-first, last-writer-wins per record) ---------- */
-
-  function mergeList(a, b) {
-    const map = new Map();
-    for (const x of a) map.set(x.id, x);
-    let added = 0, updated = 0, localNewer = 0;
-    const remote = new Map(b.map((y) => [y.id, y]));
-    for (const x of a) {
-      const y = remote.get(x.id);
-      if (y ? (x.t || 0) > (y.t || 0) : !x.del) localNewer++;
-    }
-    for (const y of b) {
-      const x = map.get(y.id);
-      if (!x) { map.set(y.id, y); if (!y.del) added++; }
-      else if ((y.t || 0) > (x.t || 0)) { map.set(y.id, y); updated++; }
-    }
-    // keep original order for stable member ordering; new items appended
-    const order = [...a.map((x) => x.id), ...b.map((y) => y.id)];
-    const seen = new Set();
-    const list = [];
-    for (const id of order) if (!seen.has(id)) { seen.add(id); list.push(map.get(id)); }
-    return { list, added, updated, localNewer };
-  }
-
-  /** Latest edit time anywhere in the group; used to detect unshared changes. */
-  function stamp(g) {
-    let t = g.t || 0;
-    for (const x of g.members) t = Math.max(t, x.t || 0);
-    for (const x of g.expenses) t = Math.max(t, x.t || 0);
-    for (const r of Object.values(g.rates || {})) t = Math.max(t, (r && r.t) || 0);
-    return t;
-  }
-
-  /**
-   * Merge two copies of the same group. Commutative on content.
-   * @returns {{group, stats:{expensesAdded, expensesUpdated, membersAdded}}}
-   */
-  function merge(local, remote) {
-    if (local.id !== remote.id) throw new Error('不同群組無法合併');
-    const meta = (remote.t || 0) > (local.t || 0) ? remote : local;
-    // Rates are relative to a base currency: only take them from copies that share the winning base.
-    const rates = {};
-    for (const src of [local, remote]) {
-      if (src.base !== meta.base) continue;
-      for (const [cur, r] of Object.entries(src.rates || {})) {
-        if (!r || cur === meta.base) continue;
-        if (!rates[cur] || (r.t || 0) > (rates[cur].t || 0)) rates[cur] = r;
-      }
-    }
-    const m = mergeList(local.members, remote.members);
-    const e = mergeList(local.expenses, remote.expenses);
-    return {
-      group: { ...local, name: meta.name, base: meta.base, t: meta.t, rates, members: m.list, expenses: e.list },
-      stats: {
-        expensesAdded: e.added, expensesUpdated: e.updated, membersAdded: m.added,
-        // records only this device has (or edited later): the other side is missing them
-        localNewer: e.localNewer + m.localNewer,
-      },
-    };
-  }
-
-  /* ---------- link encoding ---------- */
-
-  function b64urlEncode(bytes) {
-    let s = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
-    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  }
-  function b64urlDecode(str) {
-    const s = atob(str.replace(/-/g, '+').replace(/_/g, '/'));
-    const out = new Uint8Array(s.length);
-    for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
-    return out;
-  }
-  const MAX_DECODED = 4 * 1024 * 1024; // guard against decompression bombs
-  async function pipe(bytes, stream) {
-    const reader = new Blob([bytes]).stream().pipeThrough(stream).getReader();
-    const chunks = [];
-    let size = 0;
-    for (;;) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      size += value.length;
-      if (size > MAX_DECODED) { reader.cancel(); throw new Error('資料過大'); }
-      chunks.push(value);
-    }
-    const out = new Uint8Array(size);
-    let o = 0;
-    for (const c of chunks) { out.set(c, o); o += c.length; }
-    return out;
-  }
-
-  /** Strip local-only fields and tombstones older than 90 days to keep links short. */
-  function packable(group) {
-    const cutoff = now() - 90 * 864e5;
-    const keep = (x) => !x.del || (x.t || 0) > cutoff;
-    return { ...group, members: group.members.filter(keep), expenses: group.expenses.filter(keep), me: undefined };
-  }
-
-  /*
-   * Compact wire format (v2). Random ids are incompressible, so members are
-   * referenced by index, timestamps become base36 offsets from the oldest one,
-   * dates become day numbers, and equal splits become a bitmask.
-   */
-  const DAY0 = Date.UTC(2020, 0, 1);
-  const dateToNum = (d) => { const x = Date.parse(d + 'T00:00:00Z'); return d && Number.isFinite(x) ? Math.round((x - DAY0) / 864e5) : null; };
-  const numToDate = (n) => (typeof n !== 'number' || !Number.isFinite(n) ? '' : new Date(DAY0 + n * 864e5).toISOString().slice(0, 10));
-
-  function pack(group) {
-    const g = packable(group);
-    const ts = [g.t, ...g.members.map((m) => m.t), ...g.expenses.map((e) => e.t), ...Object.values(g.rates).map((r) => r.t)]
-      .filter(Number.isFinite);
-    const t0 = ts.length ? Math.min(...ts) : 0;
-    const T = (t) => Math.max(0, (t || t0) - t0).toString(36);
-    const idx = new Map(g.members.map((m, i) => [m.id, i]));
-    const curs = [g.base];
-    const ci = (c) => { let i = curs.indexOf(c); if (i < 0) { i = curs.length; curs.push(c); } return i; };
-    const rates = Object.entries(g.rates).map(([c, r]) => [ci(c), r.r, T(r.t)]);
-    const e = g.expenses.map((x) => {
-      if (x.del) return [x.id, T(x.t)];
-      const base = [x.id, T(x.t), x.kind === 'transfer' ? 1 : 0, x.amount, ci(x.cur), idx.get(x.payer) ?? -1, dateToNum(x.date)];
-      if (x.kind === 'transfer') return [...base, idx.get(x.to) ?? -1];
-      const parts = (x.split && x.split.parts) || {};
-      const mode = x.split ? ['equal', 'shares', 'exact'].indexOf(x.split.mode) : 0;
-      let p;
-      if (mode <= 0 && g.members.length <= 50) p = g.members.reduce((mask, m, i) => (parts[m.id] > 0 ? mask + 2 ** i : mask), 0);
-      else p = g.members.map((m) => Number(parts[m.id]) || 0);
-      return [...base, x.title || '', x.cat || 'other', Math.max(0, mode), p];
-    });
-    return {
-      v: 2, i: g.id, n: g.name, t0, t: T(g.t), c: curs, r: rates,
-      // [id, name, t, del?, pay?] — trailing defaults dropped
-      m: g.members.map((m) => {
-        const a = [m.id, m.name, T(m.t), m.del ? 1 : 0, m.pay || ''];
-        while (a.length > 3 && !a[a.length - 1]) a.pop();
-        return a;
-      }),
-      e,
-    };
-  }
-
-  function unpack(p) {
-    const T = (s) => p.t0 + parseInt(s, 36);
-    const members = p.m.map(([id, name, t, del, pay]) => {
-      const m = { id, name, t: T(t) };
-      if (del === 1) m.del = true;
-      if (pay) m.pay = pay;
-      return m;
-    });
-    const mid = (i) => (members[i] || {}).id;
-    const rates = {};
-    for (const [c, r, t] of p.r) rates[p.c[c]] = { r, t: T(t) };
-    const expenses = p.e.map((a) => {
-      if (a.length === 2) return { id: a[0], t: T(a[1]), del: true, amount: 0, cur: p.c[0] };
-      const [id, t, kind, amount, cur, payer, day] = a;
-      const x = { id, t: T(t), amount, cur: p.c[cur], payer: mid(payer), date: numToDate(day) };
-      if (kind === 1) return { ...x, kind: 'transfer', title: '', to: mid(a[7]) };
-      const [, , , , , , , title, cat, mode, bits] = a;
-      const parts = {};
-      if (mode === 0 && !Array.isArray(bits)) members.forEach((m, i) => { if (Math.floor(bits / 2 ** i) % 2) parts[m.id] = 1; });
-      else members.forEach((m, i) => { if (bits[i] > 0) parts[m.id] = bits[i]; });
-      return { ...x, title, cat, split: { mode: ['equal', 'shares', 'exact'][mode], parts } };
-    });
-    return { v: 1, id: p.i, name: p.n, base: p.c[0], t: T(p.t), rates, members, expenses };
-  }
-
-  async function encode(group) {
-    const json = new TextEncoder().encode(JSON.stringify(pack(group)));
-    if (typeof CompressionStream !== 'undefined') {
-      return 'z' + b64urlEncode(await pipe(json, new CompressionStream('deflate-raw')));
-    }
-    return 'j' + b64urlEncode(json);
-  }
-
-  async function decode(str) {
-    const kind = str[0];
-    const bytes = b64urlDecode(str.slice(1));
-    let json;
-    if (kind === 'z') json = await pipe(bytes, new DecompressionStream('deflate-raw'));
-    else if (kind === 'j') json = bytes;
-    else throw new Error('無法辨識的連結格式');
-    let g = JSON.parse(new TextDecoder().decode(json));
-    if (g && g.v === 2) g = unpack(g);
-    return validate(g);
-  }
-
-  /*
-   * Link data is untrusted: rebuild the group from whitelisted, type-checked
-   * fields only, so nothing malformed can reach the UI or break the math.
-   */
-  const ID_RE = /^[A-Za-z0-9_-]{1,32}$/;
-  const CUR_RE = /^[A-Z]{3}$/;
-  const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-  const isId = (x) => typeof x === 'string' && ID_RE.test(x) && x !== '__proto__';
-  const isCur = (x) => typeof x === 'string' && CUR_RE.test(x);
-  const num = (x) => (typeof x === 'number' && Number.isFinite(x) ? x : Number(x));
-  const finitePos = (x, max) => { const n = num(x); return Number.isFinite(n) && n > 0 && n < max ? n : null; };
-  const ts = (x) => { const n = num(x); return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0; };
-  const str = (x, max) => (typeof x === 'string' || typeof x === 'number' ? String(x).slice(0, max) : '');
-
-  function validate(g) {
-    if (!g || typeof g !== 'object' || !isId(g.id) || !Array.isArray(g.members) || !Array.isArray(g.expenses)) {
-      throw new Error('群組資料不完整');
-    }
-    const base = Object.prototype.hasOwnProperty.call(CURRENCIES, g.base) ? g.base : 'TWD';
-    const rates = {};
-    if (g.rates && typeof g.rates === 'object') {
-      for (const [c, r] of Object.entries(g.rates)) {
-        const v = r && finitePos(r.r, 1e9);
-        if (isCur(c) && c !== base && v) rates[c] = { r: v, t: ts(r.t) };
-      }
-    }
-    const seen = new Set();
-    const members = [];
-    for (const m of g.members) {
-      if (!m || !isId(m.id) || seen.has(m.id)) continue;
-      seen.add(m.id);
-      const x = { id: m.id, name: str(m.name, 40).trim() || '?', t: ts(m.t) };
-      if (m.del) x.del = true;
-      const pay = str(m.pay, 80).trim();
-      if (pay) x.pay = pay;
-      members.push(x);
-    }
-    const isMember = (id) => seen.has(id);
-    const cats = new Set(CATEGORIES.map((c) => c.id));
-    const expenses = [];
-    const eseen = new Set();
-    for (const e of g.expenses) {
-      if (!e || !isId(e.id) || eseen.has(e.id)) continue;
-      eseen.add(e.id);
-      if (e.del) { expenses.push({ id: e.id, t: ts(e.t), del: true, amount: 0, cur: base }); continue; }
-      const amount = finitePos(e.amount, 1e12);
-      if (!amount || !isCur(e.cur) || !isMember(e.payer)) continue;
-      const x = {
-        id: e.id, t: ts(e.t), amount, cur: e.cur, payer: e.payer,
-        date: typeof e.date === 'string' && DATE_RE.test(e.date) ? e.date : '',
-        title: str(e.title, 60),
-      };
-      if (e.kind === 'transfer') {
-        if (!isMember(e.to)) continue;
-        expenses.push({ ...x, kind: 'transfer', to: e.to });
-        continue;
-      }
-      const mode = e.split && ['equal', 'shares', 'exact'].includes(e.split.mode) ? e.split.mode : 'equal';
-      const parts = {};
-      const rawParts = (e.split && e.split.parts && typeof e.split.parts === 'object') ? e.split.parts : {};
-      for (const [id, w] of Object.entries(rawParts)) {
-        const v = finitePos(w, 1e12);
-        if (isMember(id) && v) parts[id] = mode === 'equal' ? 1 : v;
-      }
-      expenses.push({ ...x, cat: cats.has(e.cat) ? e.cat : 'other', split: { mode, parts } });
-    }
-    return { v: 1, id: g.id, name: str(g.name, 40).trim() || '未命名群組', base, t: ts(g.t), rates, members, expenses };
-  }
-
-  /* ---------- formatting ---------- */
-
-  function fmtMinor(minor, cur) {
-    const d = decimalsOf(cur);
-    const v = minor / 10 ** d;
-    const s = Math.abs(v).toLocaleString('zh-TW', { minimumFractionDigits: d, maximumFractionDigits: d });
-    const sym = Object.prototype.hasOwnProperty.call(CURRENCIES, cur) ? CURRENCIES[cur] : (isCur(cur) ? cur + ' ' : '');
-    return (v < 0 ? '-' : '') + sym + s;
-  }
-  function fmtAmount(amount, cur) {
-    return fmtMinor(Math.round(amount * 10 ** decimalsOf(cur)), cur);
-  }
-
-  function summaryText(group) {
-    const { bal } = balances(group);
-    const plan = settle(bal);
-    const name = (id) => (group.members.find((m) => m.id === id) || {}).name || '?';
-    const total = liveExpenses(group).filter((e) => e.kind !== 'transfer')
-      .reduce((s, e) => s + (toBaseMinor(group, e.amount, e.cur) || 0), 0);
-    const lines = [`【${group.name}】分帳結算`, `總花費 ${fmtMinor(total, group.base)}`, ''];
-    if (!plan.length) lines.push('✅ 大家都已經結清了！');
-    else for (const p of plan) lines.push(`${name(p.from)} → ${name(p.to)}  ${fmtMinor(p.amount, group.base)}`);
-    const payees = payeesWithInfo(group, plan);
-    if (payees.length) {
-      lines.push('', '💳 收款資訊');
-      for (const m of payees) lines.push(`${m.name}：${m.pay}`);
-    }
-    return lines.join('\n');
-  }
-
-  /** Members who receive money in `plan` and have payment info, in plan order. */
-  function payeesWithInfo(group, plan) {
-    const out = [];
-    for (const p of plan) {
-      const m = group.members.find((x) => x.id === p.to);
-      if (m && m.pay && !out.includes(m)) out.push(m);
-    }
-    return out;
-  }
-
-  function toCSV(group) {
-    const name = (id) => (group.members.find((m) => m.id === id) || {}).name || '';
-    const esc = (v) => { let s = String(v ?? ''); if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-    const rows = [['日期', '項目', '類別', '金額', '幣別', `換算(${group.base})`, '付款人', '分攤']];
-    for (const e of liveExpenses(group)) {
-      const fx = expenseEffect(group, e);
-      const cat = e.kind === 'transfer' ? '還款' : (CATEGORIES.find((c) => c.id === e.cat) || CATEGORIES[7]).label;
-      const shares = fx ? Object.entries(fx.owed).map(([id, v]) => `${name(id)}:${v / 10 ** decimalsOf(group.base)}`).join(' ') : '';
-      rows.push([e.date, e.title, cat, e.amount, e.cur, fx ? fx.total / 10 ** decimalsOf(group.base) : '', name(e.payer), shares]);
-    }
-    return '﻿' + rows.map((r) => r.map(esc).join(',')).join('\n');
-  }
-
-  return {
-    CURRENCIES, CATEGORIES, decimalsOf, uid, now, newGroup, allocate, rateOf, toBaseMinor,
-    expenseEffect, balances, settle, merge, encode, decode, pack, unpack, validate, liveMembers, liveExpenses,
-    fmtMinor, fmtAmount, summaryText, toCSV, stamp, payeesWithInfo,
-  };
-});
-</script>
-<script>
-/* SplitLink UI — vanilla JS, no build step. Depends on window.SL (core.js). */
-(() => {
-  'use strict';
-  const SL = window.SL;
-  // Embedded/sandboxed hosts can't carry #g= links or start downloads: use share codes + clipboard instead.
-  const EMBED = !!window.SPLITLINK_EMBED;
-  const $ = (s, el = document) => el.querySelector(s);
-  const $$ = (s, el = document) => [...el.querySelectorAll(s)];
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const today = () => new Date().toLocaleDateString('sv');
-  const catOf = (id) => SL.CATEGORIES.find((c) => c.id === id) || SL.CATEGORIES[SL.CATEGORIES.length - 1];
-
-  /* ---------------- storage ---------------- */
-  const LS_KEY = 'splitlink:v1';
-  let db = loadDb();
-  function loadDb() {
-    try {
-      const d = JSON.parse(localStorage.getItem(LS_KEY));
-      if (d && d.groups) {
-        const groups = {};
-        for (const g of Object.values(d.groups)) { try { const v = SL.validate(g); groups[v.id] = v; } catch {} }
-        return { me: {}, opened: {}, shared: {}, ...d, groups };
-      }
-    } catch {}
-    return { groups: {}, me: {}, opened: {}, shared: {} };
-  }
-  let warnedStorage = false;
-  function persist() {
-    try { localStorage.setItem(LS_KEY, JSON.stringify(db)); } catch {
-      if (!warnedStorage) { warnedStorage = true; toast('⚠️ 瀏覽器不允許儲存，關閉頁面前請先分享連結備份'); }
-    }
-  }
-  function saveGroup(g) { db.groups[g.id] = g; persist(); render(); }
-
-  /* ---------------- view state ---------------- */
-  const view = { gid: null, tab: 'list' };
-  const G = () => db.groups[view.gid];
-  const meOf = (g) => { const id = db.me[g.id]; return g.members.some((m) => m.id === id && !m.del) ? id : null; };
-  const nameOf = (g, id) => (g.members.find((m) => m.id === id) || {}).name || '（已移除）';
-
-  function openGroup(id, tab = 'list') {
-    view.gid = id; view.tab = tab;
-    db.opened[id] = Date.now(); db.last = id; persist();
-    render(); window.scrollTo(0, 0);
-    const g = G();
-    if (g && !meOf(g) && SL.liveMembers(g).length) setTimeout(() => whoAmISheet(g), 150);
-  }
-  function goHome() { view.gid = null; db.last = null; persist(); render(); window.scrollTo(0, 0); }
-
-  /* ---------------- toast / clipboard ---------------- */
-  let toastTimer;
-  function toast(msg, ms = 2600) {
-    $$('.toast').forEach((t) => t.remove());
-    const t = document.createElement('div');
-    t.className = 'toast'; t.textContent = msg; t.setAttribute('role', 'status');
-    document.body.appendChild(t);
-    clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), ms);
-  }
-  function markShared(g) {
-    db.shared[g.id] = SL.stamp(g); persist();
-    const dot = $('.share-btn .dot'); if (dot) dot.remove();
-  }
-  async function copy(text, okMsg = '已複製') {
-    try { await navigator.clipboard.writeText(text); toast(okMsg); return; } catch {}
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); toast(okMsg); } catch { toast('複製失敗，請手動選取'); }
-    ta.remove();
-  }
-  function download(name, text, type) {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([text], { type }));
-    a.download = name; document.body.appendChild(a); a.click();
-    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  }
-
-  /* ---------------- sheet (modal) ---------------- */
-  function sheet(title, bodyHtml, mount) {
-    closeSheet();
-    const scrim = document.createElement('div');
-    scrim.className = 'scrim';
-    scrim.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-      <div class="sheet-h"><h2>${esc(title)}</h2><button class="icon-btn" data-close aria-label="關閉">✕</button></div>
-      <div class="sheet-b">${bodyHtml}</div></div>`;
-    scrim.addEventListener('mousedown', (e) => { if (e.target === scrim) closeSheet(); });
-    scrim.querySelector('[data-close]').onclick = closeSheet;
-    document.body.appendChild(scrim);
-    document.body.style.overflow = 'hidden';
-    const body = scrim.querySelector('.sheet-b');
-    if (mount) mount(body);
-    const first = body.querySelector('[autofocus]');
-    if (first && matchMedia('(min-width: 700px)').matches) first.focus();
-    return body;
-  }
-  function closeSheet() {
-    $$('.scrim').forEach((s) => s.remove());
-    document.body.style.overflow = '';
-  }
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
-
-  function confirmSheet(title, msg, okLabel, onOk, danger) {
-    sheet(title, `<p>${esc(msg)}</p><div class="btns" style="justify-content:flex-end;margin-top:16px">
-      <button class="btn" data-no>取消</button><button class="btn ${danger ? 'danger' : 'primary'}" data-ok>${esc(okLabel)}</button></div>`, (b) => {
-      b.querySelector('[data-no]').onclick = closeSheet;
-      b.querySelector('[data-ok]').onclick = () => { closeSheet(); onOk(); };
-    });
-  }
-
-  /* ---------------- render root ---------------- */
-  function render() {
-    const app = $('#app');
-    if (view.gid && !G()) view.gid = null;
-    app.innerHTML = view.gid ? groupView(G()) : homeView();
-  }
-
-  /* ---------------- home ---------------- */
-  function groupTotal(g) {
-    return SL.liveExpenses(g).filter((e) => e.kind !== 'transfer')
-      .reduce((s, e) => s + (SL.toBaseMinor(g, e.amount, e.cur) || 0), 0);
-  }
-
-  function homeView() {
-    const gs = Object.values(db.groups).sort((a, b) => (db.opened[b.id] || 0) - (db.opened[a.id] || 0));
-    const cards = gs.map((g) => {
-      const me = meOf(g);
-      let right = `<span class="muted small">${SL.liveMembers(g).length} 人</span>`;
-      if (me) {
-        const v = SL.balances(g).bal[me] || 0;
-        right = v === 0 ? '<span class="muted small">已結清</span>'
-          : `<span class="small ${v > 0 ? 'pos' : 'neg'}">${v > 0 ? '應收' : '應付'}<br><b class="num">${SL.fmtMinor(Math.abs(v), g.base)}</b></span>`;
-      }
-      return `<button class="item" data-act="open" data-id="${esc(g.id)}">
-        <div class="ico">${esc((g.name || '?').trim().slice(0, 1))}</div>
-        <div class="grow"><div class="ellipsis"><b>${esc(g.name)}</b></div>
-        <div class="muted small ellipsis">${esc(SL.liveMembers(g).map((m) => m.name).join('、'))} · 共 ${SL.fmtMinor(groupTotal(g), g.base)}</div></div>
-        <div class="amt">${right}</div></button>`;
-    }).join('');
-
-    return `
-    <header class="top"><div class="top-in"><h1>🔗 SplitLink <span class="muted" style="font-weight:500">分帳連結</span></h1><span class="grow"></span>
-      <button class="icon-btn" data-act="theme" aria-label="切換深淺色">◐</button></div></header>
-    <main class="wrap">
-      ${gs.length ? '' : `<section class="hero"><h2>出遊、室友、聚餐，<br>一條連結就能分帳。</h2>
-        <p>不用註冊、不用下載 App、沒有每日筆數限制。資料只存在你的手機和分享連結裡。</p></section>
-        <div class="feats">
-          <div class="feat"><b>🔗 連結即資料</b>整個帳本壓縮進網址，丟到 LINE 群組大家就能看。</div>
-          <div class="feat"><b>🔀 離線各記各的</b>每個人都能自己記帳，再把連結傳回來就會自動合併。</div>
-          <div class="feat"><b>🧮 最少轉帳次數</b>自動算出誰該付誰，n 個人最多 n−1 筆轉帳。</div>
-          <div class="feat"><b>💱 多幣別</b>日圓、韓元、美金混著記，依匯率換算成主幣別。</div>
-        </div>`}
-      <div class="btns" style="margin:16px 0">
-        <button class="btn primary" data-act="new-group">＋ 建立新群組</button>
-        <button class="btn" data-act="import">貼上連結加入</button>
-        ${gs.length ? '' : '<button class="btn" data-act="demo">看範例</button>'}
-        ${canOfferInstall() ? '<button class="btn" data-act="install">📲 加到主畫面</button>' : ''}
+<a class="skip" href="#main">跳到主要內容</a>
+<header class="nav" id="nav">
+  <div class="container nav-in">
+    <a class="brand" href="/splitlink/?home"><img src="/splitlink/icon-192.png" alt="" width="30" height="30">SplitLink <small>分帳連結</small></a>
+    <nav class="nav-links" aria-label="主選單">
+      <a href="/splitlink/?home#features">特色</a>
+      <a href="/splitlink/?home#how">怎麼用</a>
+      <a href="/splitlink/?home#privacy">隱私</a>
+      <a href="/splitlink/?home#faq">常見問題</a>
+    </nav>
+    <a class="btn primary sm" href="/splitlink/app/">開始分帳</a>
+  </div>
+</header>
+<main id="main">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow">🔗 免註冊・免下載・免費</span>
+        <h1>一條連結，<br>整團的帳<span class="hl">都算清楚</span>。</h1>
+        <p class="lede">出國旅遊、室友合租、朋友聚餐。開網頁記一筆，把連結丟到 LINE 群組，大家點開就能一起記。最後自動算出「誰該給誰多少」，最少幾筆轉帳就結清。</p>
+        <div class="cta">
+          <a class="btn primary big" href="app/">免費開始分帳 <span class="arr">→</span></a>
+          <a class="btn big" href="app/?demo">看範例帳本</a>
+        </div>
+        <ul class="trust">
+          <li>不用註冊帳號</li><li>沒有每日筆數限制</li><li>資料不上傳伺服器</li><li>可加到主畫面離線使用</li>
+        </ul>
       </div>
-      ${gs.length ? `<div class="day">我的群組</div><div class="list">${cards}</div>` : ''}
-      <footer class="foot">資料只存在這台裝置的瀏覽器中，清除瀏覽資料前請先分享連結備份。</footer>
-    </main>`;
-  }
+      <div class="mock" aria-label="示意：在 LINE 群組分享 SplitLink 帳本並得到結算結果" role="img">
+        <div class="phone">
+          <div class="phone-top"><div class="av">🗼</div><div><b>東京五日遊</b><span>4 位成員</span></div></div>
+          <div class="chat" aria-hidden="true">
+            <div class="msg me">帳我先記好了，大家有花錢的自己補 👇</div>
+            <div class="linkcard"><div class="lc-img">🔗 SplitLink</div><div class="lc-b"><b>東京五日遊 的分帳帳本</b><span>weeklyship-ai.github.io/splitlink</span></div></div>
+            <div class="msg them"><small>阿傑</small>燒肉我吃兩人份，已經按份數記了 🥩</div>
+            <div class="msg them"><small>Amy</small>藥妝那筆我也補上了，連結傳回來囉</div>
+            <div class="settle">
+              <h4>建議轉帳・3 筆就結清</h4>
+              <div class="tr"><b>Amy</b><span class="to">→ 小明</span><b class="n">NT$16,460</b></div>
+              <div class="tr"><b>阿傑</b><span class="to">→ 小明</span><b class="n">NT$9,118</b></div>
+              <div class="tr"><b>阿傑</b><span class="to">→ 小華</span><b class="n">NT$4,739</b></div>
+            </div>
+          </div>
+        </div>
+        <div class="badge-float" aria-hidden="true">✓ 自動合併</div>
+        <div class="badge-float b2" aria-hidden="true">💱 日圓自動換算</div>
+      </div>
+    </div>
+  </section>
 
-  function newGroupSheet() {
-    const opts = Object.keys(SL.CURRENCIES).map((c) => `<option value="${c}">${c} ${esc(SL.CURRENCIES[c])}</option>`).join('');
-    sheet('建立新群組', `
-      <label class="f"><span>群組名稱</span><input class="in" id="ng-name" placeholder="例如：東京五日遊、301 室友" maxlength="40" autofocus></label>
-      <label class="f"><span>成員（用逗號、空白或換行分隔，第一位是你）</span><textarea class="in" id="ng-mem" placeholder="小明, 小華, 阿傑"></textarea></label>
-      <label class="f"><span>主幣別（結算用）</span><select class="in" id="ng-cur">${opts}</select></label>
-      <div class="err" id="ng-err"></div>
-      <button class="btn primary block" id="ng-ok">建立</button>`, (b) => {
-      b.querySelector('#ng-ok').onclick = () => {
-        const name = $('#ng-name', b).value.trim();
-        const mems = [...new Set($('#ng-mem', b).value.split(/[,，、\s]+/).map((s) => s.trim()).filter(Boolean))];
-        if (!name) return ($('#ng-err', b).textContent = '請輸入群組名稱');
-        if (mems.length < 2) return ($('#ng-err', b).textContent = '至少需要 2 位成員');
-        const g = SL.newGroup(name, $('#ng-cur', b).value, mems);
-        db.groups[g.id] = g; db.me[g.id] = g.members[0].id; persist();
-        closeSheet(); openGroup(g.id);
-        setTimeout(() => toast('群組已建立！記完帳按右上角「分享」傳給朋友'), 300);
-      };
-    });
-  }
+  <section class="sec alt">
+    <div class="container">
+      <div class="sec-head rv"><span class="kicker">Why</span><h2>分帳 App 最煩的，<br>往往不是算錢。</h2><p>我們把大家最常抱怨的三件事，直接拿掉。</p></div>
+      <div class="pain">
+        <div class="card rv"><div class="x">✕</div><h3>每個人都要下載、註冊</h3><p>出發前一晚還在群組裡拜託大家裝 App、收驗證信，總有人一直沒加入。</p><div class="fix">點開連結就能用</div></div>
+        <div class="card rv" style="--d:.08s"><div class="x">✕</div><h3>免費版開始限制筆數</h3><p>旅行記到一半，跳出「今日記帳次數已達上限」，只好等明天或付費。</p><div class="fix">沒有任何筆數限制</div></div>
+        <div class="card rv" style="--d:.16s"><div class="x">✕</div><h3>帳本被鎖在別人的伺服器</h3><p>要信任一間公司保管你們的消費紀錄，服務收掉資料就跟著不見。</p><div class="fix">帳本就在連結裡，你自己保管</div></div>
+      </div>
+    </div>
+  </section>
 
-  function importSheet() {
-    sheet('加入／合併群組', `
-      <p class="muted small" style="margin-top:0">貼上朋友傳來的 SplitLink 連結或分享碼。如果你已經有這個群組，會自動合併雙方的紀錄。</p>
-      <textarea class="in" id="im-text" placeholder="https://…#g=z… 或 z…" autofocus></textarea>
-      <div class="err" id="im-err"></div>
-      <div class="btns"><button class="btn primary" id="im-ok">匯入</button><button class="btn" id="im-file">從 JSON 檔匯入</button></div>
-      <input type="file" id="im-input" accept=".json,application/json" class="hidden">`, (b) => {
-      b.querySelector('#im-ok').onclick = async () => {
-        const raw = $('#im-text', b).value.trim();
-        const m = raw.match(/[#&?]g=([A-Za-z0-9_-]+)/);
-        const code = m ? m[1] : raw.replace(/\s+/g, '');
-        try { importGroup(raw.startsWith('{') ? SL.validate(JSON.parse(raw)) : await SL.decode(code)); closeSheet(); } catch (e) { $('#im-err', b).textContent = '無法讀取：' + (e.message || '格式錯誤'); }
-      };
-      b.querySelector('#im-file').onclick = () => $('#im-input', b).click();
-      b.querySelector('#im-input').onchange = async (ev) => {
-        try { importGroup(SL.validate(JSON.parse(await ev.target.files[0].text()))); closeSheet(); } catch (e) { $('#im-err', b).textContent = '檔案格式錯誤'; }
-      };
-    });
-  }
+  <section class="sec" id="features">
+    <div class="container">
+      <div class="sec-head rv"><span class="kicker">Features</span><h2>該有的都有，<br>不該有的一個都沒有。</h2></div>
+      <div class="feats">
+        <div class="card feat rv"><div class="ic">🔗</div><h3>連結就是帳本</h3><p>整本帳壓縮進網址。100 筆帳的連結也不到 3,000 字，LINE 一則訊息就裝得下。</p></div>
+        <div class="card feat rv" style="--d:.06s"><div class="ic">🔀</div><h3>各記各的，自動合併</h3><p>沒網路也能記。每個人把連結傳回群組，打開時以「最後修改」為準自動合併，刪除也會同步。</p></div>
+        <div class="card feat rv" style="--d:.12s"><div class="ic">🧮</div><h3>最少轉帳次數</h3><p>自動抵銷互相欠的錢，n 個人最多 n−1 筆轉帳。每一塊錢都對得上，不會有誤差。</p></div>
+        <div class="card feat rv"><div class="ic">⚖️</div><h3>三種分法</h3><p>平分、按份數（有人吃兩人份）、指定金額。也可以只勾選有參加的人。</p></div>
+        <div class="card feat rv" style="--d:.06s"><div class="ic">💱</div><h3>多幣別換算</h3><p>日圓、韓元、美金混著記，依你設定的匯率換算，也能一鍵抓最新匯率。</p></div>
+        <div class="card feat rv" style="--d:.12s"><div class="ic">📷</div><h3>結算圖片＋收款帳號</h3><p>一鍵產生「誰該給誰多少」的圖片，附上收款帳號，直接傳到群組。</p></div>
+      </div>
+    </div>
+  </section>
 
-  function importGroup(remote) {
-    const local = db.groups[remote.id];
-    if (local) {
-      const { group, stats } = SL.merge(local, remote);
-      db.groups[group.id] = group;
-      if (!stats.localNewer) db.shared[group.id] = SL.stamp(group);
-      persist();
-      const n = stats.expensesAdded + stats.expensesUpdated + stats.membersAdded;
-      openGroup(group.id);
-      const got = n ? `🔀 已合併：新增 ${stats.expensesAdded} 筆、更新 ${stats.expensesUpdated} 筆${stats.membersAdded ? `、新成員 ${stats.membersAdded} 位` : ''}` : '✅ 對方的紀錄你都有了';
-      toast(stats.localNewer ? `${got}。你有 ${stats.localNewer} 筆對方還沒有，記得把你的連結傳回去` : got, stats.localNewer ? 5000 : undefined);
-    } else {
-      db.groups[remote.id] = remote; db.shared[remote.id] = SL.stamp(remote); persist();
-      openGroup(remote.id);
-      toast(`已加入「${remote.name}」`);
-    }
-  }
+  <section class="sec alt" id="how">
+    <div class="container">
+      <div class="sec-head center rv"><span class="kicker">How it works</span><h2>三個步驟，一分鐘上手</h2></div>
+      <ol class="steps">
+        <li class="card rv"><h3>建立群組</h3><p>輸入群組名稱和成員，選好結算用的幣別。不用帳號、不用 Email。</p></li>
+        <li class="card rv" style="--d:.08s"><h3>記帳、分享連結</h3><p>誰付了多少、哪些人要分，記完按「分享連結」貼到群組，朋友點開就能一起記。</p></li>
+        <li class="card rv" style="--d:.16s"><h3>一鍵結算</h3><p>自動算出最少轉帳，產生結算圖片或文字。還完錢按「已還款」，帳就清了。</p></li>
+      </ol>
+    </div>
+  </section>
 
-  function demoGroup() {
-    const g = SL.newGroup('東京五日遊（範例）', 'TWD', ['小明', '小華', '阿傑', 'Amy']);
-    const [a, b, c, d] = g.members.map((m) => m.id);
-    g.rates.JPY = { r: 0.212, t: SL.now() };
-    g.members[0].pay = '範例銀行 000-1234567890（請改成你的帳號）';
-    const all = { [a]: 1, [b]: 1, [c]: 1, [d]: 1 };
-    const add = (title, amount, cur, payer, cat, parts, date, mode = 'equal') =>
-      g.expenses.push({ id: SL.uid(), t: SL.now(), title, amount, cur, payer, cat, date, split: { mode, parts } });
-    add('機票 ×4', 38400, 'TWD', a, 'transport', all, '2026-11-01');
-    add('新宿飯店 4 晚', 96000, 'JPY', b, 'stay', all, '2026-11-02');
-    add('一蘭拉麵', 4920, 'JPY', c, 'food', all, '2026-11-02');
-    add('Suica 儲值', 8000, 'JPY', d, 'transport', all, '2026-11-02');
-    add('迪士尼門票', 37600, 'JPY', a, 'fun', { [a]: 1, [b]: 1, [d]: 1 }, '2026-11-03');
-    add('燒肉（阿傑吃兩人份）', 18000, 'JPY', b, 'food', { [a]: 1, [b]: 1, [c]: 2, [d]: 1 }, '2026-11-04', 'shares');
-    add('藥妝', 12000, 'JPY', d, 'shop', { [d]: 9000, [b]: 3000 }, '2026-11-05', 'exact');
-    g.expenses.push({ id: SL.uid(), t: SL.now(), kind: 'transfer', amount: 2000, cur: 'TWD', payer: c, to: a, date: '2026-11-05', title: '' });
-    db.groups[g.id] = g; db.me[g.id] = a; persist();
-    openGroup(g.id);
-  }
+  <section class="sec">
+    <div class="container">
+      <div class="sec-head rv"><span class="kicker">Use cases</span><h2>只要是「先幫墊、之後再算」</h2></div>
+      <div class="uses">
+        <div class="card use rv"><div class="em">✈️</div><h3>出國旅遊</h3><p>機票、住宿、交通卡、餐費，台幣日圓混著記，回國一次結清。</p></div>
+        <div class="card use rv" style="--d:.06s"><div class="em">🏠</div><h3>室友合租</h3><p>房租、水電、網路、衛生紙，一個群組用一整年。</p></div>
+        <div class="card use rv" style="--d:.12s"><div class="em">🍻</div><h3>聚餐聚會</h3><p>有人沒喝酒、有人吃比較多？按份數或指定金額，公平又不尷尬。</p></div>
+        <div class="card use rv" style="--d:.18s"><div class="em">🛒</div><h3>團購合買</h3><p>一人先付、大家分攤，運費也能平均分，誰還沒付一目了然。</p></div>
+      </div>
+    </div>
+  </section>
 
-  /* ---------------- group view ---------------- */
-  const TABS = [['list', '帳目'], ['settle', '結算'], ['stats', '統計'], ['settings', '設定']];
+  <section class="sec alt" id="privacy">
+    <div class="container privacy">
+      <div class="rv">
+        <span class="kicker">Privacy</span>
+        <h2>你的帳，只在你手上。</h2>
+        <ul>
+          <li><span class="ic">🚫</span><div><b>沒有伺服器、沒有帳號</b><span>SplitLink 是純前端網頁，我們沒有資料庫，也看不到你的帳。</span></div></li>
+          <li><span class="ic">🔒</span><div><b>網址 # 後面的內容不會被送出</b><span>瀏覽器開啟連結時，# 之後的帳本資料不會傳給任何伺服器，連 GitHub 也收不到。</span></div></li>
+          <li><span class="ic">📵</span><div><b>沒有追蹤、沒有廣告、沒有 Cookie</b><span>不放分析工具，也不賣任何資料。</span></div></li>
+        </ul>
+        <p style="margin-top:20px"><a href="privacy/">閱讀完整隱私權政策 →</a></p>
+      </div>
+      <div class="card urlviz rv" style="--d:.1s"><span class="host">https://weeklyship-ai.github.io/splitlink/app/</span><span class="hash">#g=zjVPLbtswEPyVguc4oPmmb02BIMihKtqcCh8YmbaFyqSgR1Ej8L93aUmRUqdFLwZILnd2ZnaGfjD5zzqcR…</span><span class="cap">▲ 綠色這段就是整本帳本（壓縮過）。它只存在於連結和你的瀏覽器裡。<br>提醒：拿到連結的人就能看到帳本，請只傳給同行的人。</span></div>
+    </div>
+  </section>
 
-  function groupView(g) {
-    const me = meOf(g);
-    const tabs = TABS.map(([id, l]) => `<button class="tab ${view.tab === id ? 'on' : ''}" data-act="tab" data-tab="${id}">${l}</button>`).join('');
-    let body = '';
-    if (view.tab === 'list') body = listTab(g, me);
-    else if (view.tab === 'settle') body = settleTab(g, me);
-    else if (view.tab === 'stats') body = statsTab(g, me);
-    else body = settingsTab(g, me);
-    return `
-    <header class="top"><div class="top-in">
-      <button class="icon-btn" data-act="home" aria-label="返回">←</button>
-      <h1 class="grow ellipsis">${esc(g.name)}</h1>
-      <button class="btn sm primary share-btn" data-act="share">分享連結${SL.stamp(g) > (db.shared[g.id] || 0) && SL.liveExpenses(g).length ? '<span class="dot" title="有還沒分享出去的變更"></span>' : ''}</button></div>
-      <nav class="tabs">${tabs}</nav></header>
-    <main class="wrap">${body}</main>
-    ${view.tab === 'list' ? '<button class="fab" data-act="add">＋ 記一筆</button>' : ''}`;
-  }
+  <section class="sec" id="faq">
+    <div class="container">
+      <div class="sec-head center rv"><span class="kicker">FAQ</span><h2>常見問題</h2></div>
+      <div class="faq">
+        <details class="rv"><summary>真的完全免費嗎？</summary><p>是的。沒有付費版、沒有廣告，也沒有筆數限制。SplitLink 是 WeeklyShip AI 的開源作品，程式碼以 MIT 授權公開在 GitHub。</p></details>
+        <details class="rv"><summary>朋友需要下載 App 或註冊嗎？</summary><p>不需要。朋友點開連結就能看帳、記帳，手機或電腦的瀏覽器都可以。想要像 App 一樣使用，可以「加到主畫面」，之後沒網路也能打開。</p></details>
+        <details class="rv"><summary>大家同時記帳，資料會不會打架？</summary><p>不會。每筆帳都有自己的編號和修改時間。打開別人傳來的連結時，SplitLink 會逐筆比對，新增的補上、修改過的以最後修改為準、刪除的同步刪除，不會整本被覆蓋。</p></details>
+        <details class="rv"><summary>換手機或清除瀏覽資料，帳會不見嗎？</summary><p>帳本存在瀏覽器的本機儲存空間。清除瀏覽資料前，只要把最新的分享連結留在群組裡，或在「設定」匯出 JSON 備份，隨時都能再匯入回來。</p></details>
+        <details class="rv"><summary>匯率怎麼算？</summary><p>每個群組有一個「主幣別」。記其他幣別時，用你輸入的匯率換算；也可以在設定裡按「抓取最新匯率」，從公開匯率服務取得參考匯率。所有金額都換算成最小單位（例如「分」）的整數計算，總和一定對得上。</p></details>
+        <details class="rv"><summary>連結會不會太長，LINE 傳不出去？</summary><p>帳本會先轉成精簡格式再壓縮。100 筆帳大約 2,700 字元，遠低於 LINE 單則訊息 5,000 字的上限。真的很大本的帳，也可以改傳 JSON 備份檔。</p></details>
+        <details class="rv"><summary>SplitLink 會幫我們轉帳或收款嗎？</summary><p>不會。SplitLink 只負責記帳和計算，不經手任何金錢。實際轉帳請用你們習慣的銀行或支付工具。</p></details>
+        <details class="rv"><summary>遇到問題或想要新功能？</summary><p>到 <a href="https://github.com/weeklyship-ai/splitlink/issues/new">GitHub 開 issue</a>，或寄信到 <a href="mailto:weeklyship@futuracept.com">weeklyship@futuracept.com</a>。我們會依照大家的回饋持續改版。</p></details>
+      </div>
+    </div>
+  </section>
 
-  function meBar(g, me) {
-    return `<div class="mebar small muted">我是：<button class="chip on" data-act="who">${esc(me ? nameOf(g, me) : '選擇身分')} ▾</button></div>`;
-  }
-
-  function missingBanner(g, missing) {
-    return missing.length ? `<div class="banner">⚠️ ${esc(missing.join('、'))} 尚未設定匯率，這些帳目暫不計入。<button class="btn sm" data-act="tab" data-tab="settings" style="margin-left:6px">去設定</button></div>` : '';
-  }
-
-  function listTab(g, me) {
-    const { bal, paid, consumed, missingRates } = SL.balances(g);
-    const total = Object.values(consumed).reduce((s, v) => s + v, 0);
-    const exps = SL.liveExpenses(g).slice().sort((x, y) => (y.date || '').localeCompare(x.date || '') || (y.t || 0) - (x.t || 0));
-    let head = `<div class="summary">
-      <div class="stat"><div class="k">群組總花費</div><div class="v num">${SL.fmtMinor(total, g.base)}</div></div>`;
-    if (me) {
-      const v = bal[me] || 0;
-      head += `<div class="stat"><div class="k">${v > 0 ? '別人欠我' : v < 0 ? '我還欠' : '我的狀態'}</div>
-        <div class="v num ${v > 0 ? 'pos' : v < 0 ? 'neg' : ''}">${v === 0 ? '已結清 ✓' : SL.fmtMinor(Math.abs(v), g.base)}</div>
-        <div class="k">我付了 ${SL.fmtMinor(paid[me] || 0, g.base)} · 我的份 ${SL.fmtMinor(consumed[me] || 0, g.base)}</div></div>`;
-    } else head += `<div class="stat"><div class="k">成員</div><div class="v">${SL.liveMembers(g).length} 人</div></div>`;
-    head += '</div>';
-
-    if (!exps.length) {
-      return meBar(g, me) + head + `<div class="empty"><div class="big">🧾</div><p>還沒有任何帳目<br>按右下角「記一筆」開始</p></div>`;
-    }
-    let out = meBar(g, me) + head + missingBanner(g, missingRates);
-    let lastDay = null, buf = '';
-    const flush = () => { if (buf) out += `<div class="list">${buf}</div>`; buf = ''; };
-    for (const e of exps) {
-      if (e.date !== lastDay) { flush(); lastDay = e.date; out += `<div class="day">${esc(fmtDay(e.date))}</div>`; }
-      buf += expenseRow(g, e, me);
-    }
-    flush();
-    return out;
-  }
-
-  function fmtDay(d) {
-    if (!d) return '未填日期';
-    const dt = new Date(d + 'T00:00:00');
-    if (isNaN(dt)) return d;
-    const wd = '日一二三四五六'[dt.getDay()];
-    return `${dt.getMonth() + 1} 月 ${dt.getDate()} 日（${wd}）${d === today() ? '· 今天' : ''}`;
-  }
-
-  function expenseRow(g, e, me) {
-    const fx = SL.expenseEffect(g, e);
-    let right = '';
-    if (me && fx) {
-      const net = (fx.paid[me] || 0) - (fx.owed[me] || 0);
-      if (e.kind === 'transfer') right = net ? `<b class="num">${SL.fmtMinor(Math.abs(net), g.base)}</b><span class="muted small">${net > 0 ? '我付出' : '我收到'}</span>` : '';
-      else right = net > 0 ? `<span class="small pos">借出</span><b class="num pos">${SL.fmtMinor(net, g.base)}</b>`
-        : net < 0 ? `<span class="small neg">我的份</span><b class="num neg">${SL.fmtMinor(-net, g.base)}</b>`
-          : '<span class="small muted">未參與</span>';
-    } else if (!fx) right = '<span class="small neg">缺匯率</span>';
-    if (e.kind === 'transfer') {
-      return `<button class="item" data-act="edit" data-id="${esc(e.id)}"><div class="ico">💸</div>
-        <div class="grow"><div class="ellipsis">${esc(nameOf(g, e.payer))} 還給 ${esc(nameOf(g, e.to))}</div>
-        <div class="muted small">${SL.fmtAmount(e.amount, e.cur)}</div></div><div class="amt">${right}</div></button>`;
-    }
-    const n = fx ? Object.keys(fx.owed).length : 0;
-    return `<button class="item" data-act="edit" data-id="${esc(e.id)}"><div class="ico">${catOf(e.cat).icon}</div>
-      <div class="grow"><div class="ellipsis">${esc(e.title || catOf(e.cat).label)}</div>
-      <div class="muted small ellipsis">${esc(nameOf(g, e.payer))} 付了 ${SL.fmtAmount(e.amount, e.cur)}${n ? ` · ${n} 人分` : ''}</div></div>
-      <div class="amt">${right}</div></button>`;
-  }
-
-  function settleTab(g, me) {
-    const { bal, missingRates } = SL.balances(g);
-    const plan = SL.settle({ ...bal });
-    const maxAbs = Math.max(1, ...Object.values(bal).map(Math.abs));
-    const rows = SL.liveMembers(g).map((m) => {
-      const v = bal[m.id] || 0;
-      const w = (Math.abs(v) / maxAbs) * 50;
-      return `<div style="margin:10px 0"><div class="row"><span class="grow">${esc(m.name)}${m.id === me ? ' <span class="muted small">（我）</span>' : ''}</span>
-        <b class="num ${v > 0 ? 'pos' : v < 0 ? 'neg' : 'muted'}">${v === 0 ? '0' : (v > 0 ? '+' : '−') + SL.fmtMinor(Math.abs(v), g.base)}</b></div>
-        <div class="dbar"><i class="${v >= 0 ? 'p' : 'n'}" style="width:${w}%"></i></div></div>`;
-    }).join('');
-    const planHtml = plan.length ? plan.map((p, i) => {
-      const mine = p.from === me || p.to === me;
-      const to = g.members.find((m) => m.id === p.to) || {};
-      const pay = to.pay ? `<button class="paychip" data-act="copy-pay" data-id="${esc(to.id)}" title="複製收款資訊">💳 ${esc(to.pay)}</button>` : '';
-      return `<div class="item" style="${mine ? 'background:var(--accent-soft)' : ''}">
-        <div class="grow"><b>${esc(nameOf(g, p.from))}</b> <span class="muted">→</span> <b>${esc(nameOf(g, p.to))}</b>
-        <div class="num" style="font-size:18px;font-weight:650">${SL.fmtMinor(p.amount, g.base)}</div>${pay}</div>
-        <button class="btn sm" data-act="paid" data-i="${i}">已還款</button></div>`;
-    }).join('') : '<div class="empty" style="padding:24px"><div class="big">🎉</div><p>大家都結清了！</p></div>';
-    return meBar(g, me) + missingBanner(g, missingRates) + `
-      <div class="card"><h3>每個人的餘額</h3><div class="muted small">＋ 代表別人欠他，− 代表他該付錢</div>${rows}</div>
-      <div class="day">建議轉帳（${plan.length} 筆就能結清）</div>
-      <div class="list">${planHtml}</div>
-      <div class="btns" style="margin-top:14px">
-        <button class="btn primary" data-act="settle-image">📷 結算圖片</button>
-        <button class="btn" data-act="copy-summary">複製結算文字</button>
-        <button class="btn" data-act="add-transfer">手動記一筆還款</button></div>
-      ${plan.length && !SL.payeesWithInfo(g, plan).length ? '<p class="muted small">💡 到「設定 → 成員」填上收款帳號，結算時就會顯示給要付錢的人。</p>' : ''}`;
-  }
-
-  function statsTab(g, me) {
-    const { paid, consumed } = SL.balances(g);
-    const byCat = {};
-    let total = 0;
-    for (const e of SL.liveExpenses(g)) {
-      if (e.kind === 'transfer') continue;
-      const v = SL.toBaseMinor(g, e.amount, e.cur);
-      if (v == null) continue;
-      byCat[e.cat || 'other'] = (byCat[e.cat || 'other'] || 0) + v; total += v;
-    }
-    const cats = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
-    const maxC = Math.max(1, ...cats.map((c) => c[1]));
-    const catHtml = cats.length ? cats.map(([id, v]) => `<div style="margin:10px 0"><div class="row"><span class="grow">${catOf(id).icon} ${catOf(id).label}</span>
-      <span class="num">${SL.fmtMinor(v, g.base)} <span class="muted small">${Math.round((v / total) * 100)}%</span></span></div>
-      <div class="bar"><i style="width:${(v / maxC) * 100}%"></i></div></div>`).join('') : '<p class="muted">還沒有資料</p>';
-    const mem = SL.liveMembers(g);
-    const maxP = Math.max(1, ...mem.map((m) => Math.max(paid[m.id] || 0, consumed[m.id] || 0)));
-    const memHtml = mem.map((m) => `<div style="margin:12px 0"><div class="row"><b class="grow">${esc(m.name)}${m.id === me ? ' <span class="muted small">（我）</span>' : ''}</b></div>
-      <div class="row small"><span class="muted" style="width:52px">付出</span><div class="bar grow" style="margin:0"><i style="width:${((paid[m.id] || 0) / maxP) * 100}%"></i></div><span class="num" style="width:96px;text-align:right">${SL.fmtMinor(paid[m.id] || 0, g.base)}</span></div>
-      <div class="row small"><span class="muted" style="width:52px">花費</span><div class="bar grow" style="margin:0"><i style="width:${((consumed[m.id] || 0) / maxP) * 100}%;background:var(--muted)"></i></div><span class="num" style="width:96px;text-align:right">${SL.fmtMinor(consumed[m.id] || 0, g.base)}</span></div></div>`).join('');
-    const days = new Set(SL.liveExpenses(g).map((e) => e.date).filter(Boolean)).size;
-    return `<div class="summary">
-      <div class="stat"><div class="k">總花費</div><div class="v num">${SL.fmtMinor(total, g.base)}</div></div>
-      <div class="stat"><div class="k">每人平均</div><div class="v num">${SL.fmtMinor(Math.round(total / Math.max(1, mem.length)), g.base)}</div>${days > 1 ? `<div class="k">共 ${days} 天，日均 ${SL.fmtMinor(Math.round(total / days), g.base)}</div>` : ''}</div></div>
-      <div class="card"><h3>依類別</h3>${catHtml}</div>
-      <div class="card"><h3>每個人</h3><div class="muted small">「付出」是實際掏錢，「花費」是他該負擔的份</div>${memHtml}</div>`;
-  }
-
-  function settingsTab(g, me) {
-    const used = new Set(SL.liveExpenses(g).map((e) => e.cur));
-    for (const c of Object.keys(g.rates)) used.add(c);
-    used.delete(g.base);
-    const rates = [...used].map((c) => `<div class="split-row"><span class="grow">1 ${c}</span><span class="muted">=</span>
-      <input class="in num" type="number" inputmode="decimal" step="any" min="0" data-rate="${c}" value="${g.rates[c] ? g.rates[c].r : ''}" placeholder="匯率"><span class="muted small">${g.base}</span></div>`).join('');
-    const opts = Object.keys(SL.CURRENCIES).map((c) => `<option value="${c}" ${c === g.base ? 'selected' : ''}>${c} ${esc(SL.CURRENCIES[c])}</option>`).join('');
-    const mems = SL.liveMembers(g).map((m) => `<div class="mem-row"><div class="row"><input class="in grow" data-mname="${esc(m.id)}" value="${esc(m.name)}" maxlength="20" aria-label="成員名稱">
-      <button class="icon-btn" data-act="del-member" data-id="${esc(m.id)}" aria-label="移除 ${esc(m.name)}">🗑</button></div>
-      <input class="in small" data-mpay="${esc(m.id)}" value="${esc(m.pay || '')}" maxlength="80" placeholder="收款方式（選填）例：國泰 013-1234567890、LINE Pay" aria-label="${esc(m.name)} 的收款方式"></div>`).join('');
-    return `
-      <div class="card"><h3>群組</h3>
-        <label class="f"><span>名稱</span><input class="in" id="st-name" value="${esc(g.name)}" maxlength="40"></label>
-        <label class="f"><span>主幣別（結算時使用）</span><select class="in" id="st-base">${opts}</select></label></div>
-      <div class="card"><h3>成員</h3><p class="muted small" style="margin:0 0 6px">填了收款方式，結算時就會顯示給要付錢的人。收款方式會包含在分享連結裡。</p>${mems}
-        <div class="row" style="margin-top:10px"><input class="in grow" id="st-newmem" placeholder="新增成員名稱" maxlength="20"><button class="btn" data-act="add-member">新增</button></div></div>
-      <div class="card"><h3>匯率</h3>${rates || '<p class="muted small">目前只有主幣別。記帳時選擇其他幣別就會出現在這裡。</p>'}
-        <div class="btns" style="margin-top:10px">${rates ? `<button class="btn sm" data-act="save-rates">儲存匯率</button>${EMBED ? '' : '<button class="btn sm" data-act="fetch-rates">抓取最新匯率（需網路）</button>'}` : ''}</div></div>
-      <div class="card"><h3>備份與匯出</h3><div class="btns">
-        <button class="btn sm" data-act="csv">${EMBED ? '複製 CSV' : '匯出 CSV（Excel）'}</button>
-        <button class="btn sm" data-act="json">${EMBED ? '複製 JSON 備份' : '下載 JSON 備份'}</button></div></div>
-      <div class="card"><h3>危險區域</h3><p class="muted small">只會從這台裝置刪除，不影響其他人手上的連結。</p>
-        <button class="btn danger" data-act="del-group">從這台裝置刪除群組</button></div>`;
-  }
-
-  /* ---------------- who am I ---------------- */
-  function whoAmISheet(g) {
-    const btns = SL.liveMembers(g).map((m) => `<button class="chip ${db.me[g.id] === m.id ? 'on' : ''}" data-id="${esc(m.id)}" style="font-size:15px;padding:8px 16px">${esc(m.name)}</button>`).join('');
-    sheet('你是哪一位？', `<p class="muted small" style="margin-top:0">選擇後會標出「你欠多少／別人欠你多少」。只存在你的裝置上。</p>
-      <div class="mebar" style="gap:10px">${btns}</div>`, (b) => {
-      $$('[data-id]', b).forEach((el) => (el.onclick = () => { db.me[g.id] = el.dataset.id; persist(); closeSheet(); render(); }));
-    });
-  }
-
-  /* ---------------- expense editor ---------------- */
-  function expenseSheet(g, existing) {
-    const mem = SL.liveMembers(g);
-    const me = meOf(g);
-    const e = existing ? structuredClone(existing) : null;
-    const d = {
-      title: e ? e.title || '' : '',
-      amount: e ? String(e.amount) : '',
-      cur: e ? e.cur : lastCur(g),
-      payer: e && mem.some((m) => m.id === e.payer) ? e.payer : me || mem[0].id,
-      date: e ? e.date || today() : today(),
-      cat: e ? e.cat || 'other' : 'food',
-      mode: e && e.split ? e.split.mode : 'equal',
-      parts: {},
-    };
-    for (const m of mem) {
-      const p = e && e.split && e.split.parts ? e.split.parts[m.id] : undefined;
-      d.parts[m.id] = d.mode === 'equal' ? (e ? !!(p > 0) : true) : p > 0 ? String(p) : '';
-    }
-    const curs = [...new Set([g.base, ...Object.keys(g.rates), d.cur, ...Object.keys(SL.CURRENCIES)])];
-    const curOpts = curs.map((c) => `<option value="${c}" ${c === d.cur ? 'selected' : ''}>${c}</option>`).join('');
-    const payerOpts = mem.map((m) => `<option value="${esc(m.id)}" ${m.id === d.payer ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
-    const cats = SL.CATEGORIES.map((c) => `<button type="button" data-cat="${c.id}" class="${c.id === d.cat ? 'on' : ''}">${c.icon} ${c.label}</button>`).join('');
-    const body = sheet(e ? '編輯帳目' : '記一筆', `
-      <div class="amtrow" style="margin-top:6px"><input class="in big num" id="ex-amt" type="number" inputmode="decimal" step="any" min="0" placeholder="0" value="${esc(d.amount)}" autofocus>
-        <select class="in" id="ex-cur">${curOpts}</select></div>
-      <div id="ex-rate" class="split-hint"></div>
-      <label class="f"><span>項目</span><input class="in" id="ex-title" placeholder="例如：晚餐、計程車" maxlength="60" value="${esc(d.title)}"></label>
-      <div class="cats">${cats}</div>
-      <div class="two"><label class="f"><span>誰付的</span><select class="in" id="ex-payer">${payerOpts}</select></label>
-        <label class="f"><span>日期</span><input class="in" id="ex-date" type="date" value="${esc(d.date)}"></label></div>
-      <div class="f" style="margin:14px 0 6px"><div class="seg" id="ex-mode">
-        <button type="button" data-mode="equal">平分</button><button type="button" data-mode="shares">按份數</button><button type="button" data-mode="exact">指定金額</button></div></div>
-      <div id="ex-parts"></div>
-      <div class="split-hint muted" id="ex-hint"></div>
-      <div class="err" id="ex-err"></div>
-      <div class="btns" style="margin-top:8px"><button class="btn primary grow" id="ex-save">${e ? '儲存' : '新增'}</button>
-        ${e ? '<button class="btn danger" id="ex-del">刪除</button>' : ''}</div>`);
-
-    const amtMinor = () => Math.round((parseFloat(d.amount) || 0) * 10 ** SL.decimalsOf(d.cur));
-    const weights = () => mem.map((m) => [m.id, d.mode === 'equal' ? (d.parts[m.id] ? 1 : 0) : parseFloat(d.parts[m.id]) || 0]);
-
-    function drawRate() {
-      const box = $('#ex-rate', body);
-      if (d.cur === g.base) { box.innerHTML = ''; return; }
-      const r = g.rates[d.cur];
-      box.innerHTML = `<div class="row"><span class="muted">匯率 1 ${d.cur} =</span><input class="in num" id="ex-rateval" type="number" step="any" min="0" inputmode="decimal" style="width:110px;padding:6px 8px" value="${r ? r.r : ''}" placeholder="必填"><span class="muted">${g.base}</span></div>`;
-      $('#ex-rateval', body).oninput = drawHint;
-    }
-    function drawParts() {
-      $$('#ex-mode button', body).forEach((b) => b.classList.toggle('on', b.dataset.mode === d.mode));
-      const box = $('#ex-parts', body);
-      box.innerHTML = `<div class="card" style="margin:6px 0;padding:6px 14px">${mem.map((m) => {
-        const ctrl = d.mode === 'equal'
-          ? `<input type="checkbox" data-p="${esc(m.id)}" ${d.parts[m.id] ? 'checked' : ''} aria-label="${esc(m.name)}">`
-          : `<input class="in num" type="number" inputmode="decimal" step="any" min="0" data-p="${esc(m.id)}" value="${esc(d.parts[m.id] === true ? '' : d.parts[m.id] || '')}" placeholder="${d.mode === 'shares' ? '份' : '0'}">`;
-        return `<label class="split-row">${d.mode === 'equal' ? ctrl : ''}<span class="grow">${esc(m.name)}</span><span class="muted small num" data-share="${esc(m.id)}"></span>${d.mode === 'equal' ? '' : ctrl}</label>`;
-      }).join('')}</div>${d.mode === 'equal' ? '<div class="btns"><button type="button" class="btn sm" id="ex-all">全選</button><button type="button" class="btn sm" id="ex-none">全不選</button></div>' : ''}`;
-      $$('[data-p]', box).forEach((inp) => {
-        inp.oninput = inp.onchange = () => { d.parts[inp.dataset.p] = inp.type === 'checkbox' ? inp.checked : inp.value; drawHint(); };
-      });
-      const all = $('#ex-all', box), none = $('#ex-none', box);
-      if (all) all.onclick = () => { mem.forEach((m) => (d.parts[m.id] = true)); drawParts(); };
-      if (none) none.onclick = () => { mem.forEach((m) => (d.parts[m.id] = false)); drawParts(); };
-      drawHint();
-    }
-    function drawHint() {
-      const total = amtMinor();
-      const ws = weights();
-      const alloc = SL.allocate(total, ws);
-      for (const m of mem) {
-        const el = $(`[data-share="${CSS.escape(m.id)}"]`, body);
-        if (el) el.textContent = alloc[m.id] ? SL.fmtMinor(alloc[m.id], d.cur) : '';
-      }
-      const hint = $('#ex-hint', body);
-      const n = ws.filter(([, w]) => w > 0).length;
-      if (d.mode === 'exact') {
-        const s = Math.round(ws.reduce((a, [, w]) => a + w, 0) * 10 ** SL.decimalsOf(d.cur));
-        const left = total - s;
-        hint.innerHTML = left === 0 ? '<span class="pos">✓ 金額剛好分完</span>'
-          : `<span class="neg">${left > 0 ? '還有' : '超出'} ${SL.fmtMinor(Math.abs(left), d.cur)} ${left > 0 ? '未分配' : ''}</span>`;
-      } else hint.textContent = n ? `${n} 人分攤${d.mode === 'equal' && total ? `，每人約 ${SL.fmtMinor(Math.round(total / n), d.cur)}` : ''}` : '請選擇分攤的人';
-      const rateIn = $('#ex-rateval', body);
-      if (rateIn && parseFloat(rateIn.value) > 0 && total) {
-        hint.innerHTML += ` <span class="muted">· 約 ${SL.fmtMinor(Math.round((total / 10 ** SL.decimalsOf(d.cur)) * parseFloat(rateIn.value) * 10 ** SL.decimalsOf(g.base)), g.base)}</span>`;
-      }
-    }
-
-    $('#ex-amt', body).oninput = (ev) => { d.amount = ev.target.value; drawHint(); };
-    $('#ex-cur', body).onchange = (ev) => { d.cur = ev.target.value; drawRate(); drawHint(); };
-    $('#ex-title', body).oninput = (ev) => (d.title = ev.target.value);
-    $('#ex-payer', body).onchange = (ev) => (d.payer = ev.target.value);
-    $('#ex-date', body).onchange = (ev) => (d.date = ev.target.value);
-    $$('.cats button', body).forEach((b) => (b.onclick = () => { d.cat = b.dataset.cat; $$('.cats button', body).forEach((x) => x.classList.toggle('on', x === b)); }));
-    $$('#ex-mode button', body).forEach((b) => (b.onclick = () => {
-      if (d.mode === b.dataset.mode) return;
-      const wasEqual = d.mode === 'equal';
-      d.mode = b.dataset.mode;
-      for (const m of mem) {
-        if (d.mode === 'equal') d.parts[m.id] = parseFloat(d.parts[m.id]) > 0 || d.parts[m.id] === true;
-        else if (wasEqual) d.parts[m.id] = d.parts[m.id] ? (d.mode === 'shares' ? '1' : '') : '';
-        else if (d.mode === 'shares') d.parts[m.id] = parseFloat(d.parts[m.id]) > 0 ? '1' : '';
-        else d.parts[m.id] = '';
-      }
-      // Nobody left selected (e.g. coming back from empty exact amounts) → include everyone.
-      if (d.mode !== 'exact' && !mem.some((m) => d.parts[m.id] === true || parseFloat(d.parts[m.id]) > 0)) {
-        for (const m of mem) d.parts[m.id] = d.mode === 'equal' ? true : '1';
-      }
-      drawParts();
-    }));
-
-    $('#ex-save', body).onclick = () => {
-      const err = $('#ex-err', body);
-      const amount = parseFloat(d.amount);
-      if (!(amount > 0) || amount >= 1e12) return (err.textContent = '請輸入金額');
-      let rate = null;
-      if (d.cur !== g.base) {
-        rate = parseFloat(($('#ex-rateval', body) || {}).value);
-        if (!(rate > 0)) return (err.textContent = `請輸入 ${d.cur} 的匯率`);
-      }
-      const ws = weights().filter(([, w]) => w > 0);
-      if (!ws.length) return (err.textContent = '至少要有一個人分攤');
-      if (d.mode === 'exact') {
-        const s = Math.round(ws.reduce((a, [, w]) => a + w, 0) * 10 ** SL.decimalsOf(d.cur));
-        if (s !== amtMinor()) return (err.textContent = '指定金額的總和要等於總金額');
-      }
-      if (rate && (!g.rates[d.cur] || g.rates[d.cur].r !== rate)) g.rates[d.cur] = { r: rate, t: SL.now() };
-      const parts = Object.fromEntries(ws.map(([id, w]) => [id, d.mode === 'equal' ? 1 : w]));
-      const rec = {
-        ...(existing || {}), id: existing ? existing.id : SL.uid(), t: SL.now(), title: d.title.trim(), amount,
-        cur: d.cur, payer: d.payer, date: d.date || today(), cat: d.cat, split: { mode: d.mode, parts },
-      };
-      upsertExpense(g, rec);
-      db.lastCur = db.lastCur || {}; db.lastCur[g.id] = d.cur;
-      closeSheet(); saveGroup(g);
-      toast(existing ? '已更新' : '已新增 ✓');
-    };
-    if (e) $('#ex-del', body).onclick = () => deleteExpense(g, existing);
-
-    drawRate(); drawParts();
-  }
-  function lastCur(g) { return (db.lastCur && db.lastCur[g.id]) || g.base; }
-
-  function upsertExpense(g, rec) {
-    const i = g.expenses.findIndex((x) => x.id === rec.id);
-    if (i >= 0) g.expenses[i] = rec; else g.expenses.push(rec);
-  }
-  function deleteExpense(g, e) {
-    confirmSheet('刪除這筆帳目？', `「${e.kind === 'transfer' ? '還款' : e.title || catOf(e.cat).label}」${SL.fmtAmount(e.amount, e.cur)}`, '刪除', () => {
-      const i = g.expenses.findIndex((x) => x.id === e.id);
-      g.expenses[i] = { id: e.id, t: SL.now(), del: true, amount: 0, cur: g.base };
-      saveGroup(g); toast('已刪除');
-    }, true);
-  }
-
-  function transferSheet(g, existing, preset) {
-    const mem = SL.liveMembers(g);
-    const me = meOf(g);
-    const t = existing || preset || { payer: me || mem[0].id, to: (mem.find((m) => m.id !== (me || mem[0].id)) || mem[0]).id, amount: '', cur: g.base, date: today() };
-    const tcur = existing ? existing.cur : g.base;
-    const opt = (sel) => mem.map((m) => `<option value="${esc(m.id)}" ${m.id === sel ? 'selected' : ''}>${esc(m.name)}</option>`).join('');
-    const body = sheet(existing ? '編輯還款' : '記一筆還款', `
-      <div class="two"><label class="f"><span>誰付錢</span><select class="in" id="tr-from">${opt(t.payer)}</select></label>
-        <label class="f"><span>付給誰</span><select class="in" id="tr-to">${opt(t.to)}</select></label></div>
-      <label class="f"><span>金額（${esc(tcur)}）</span><input class="in big num" id="tr-amt" type="number" inputmode="decimal" step="any" min="0" value="${esc(t.amount)}" autofocus></label>
-      <label class="f"><span>日期</span><input class="in" id="tr-date" type="date" value="${esc(t.date || today())}"></label>
-      <div class="err" id="tr-err"></div>
-      <div class="btns"><button class="btn primary grow" id="tr-ok">${existing ? '儲存' : '記錄還款'}</button>${existing ? '<button class="btn danger" id="tr-del">刪除</button>' : ''}</div>`);
-    $('#tr-ok', body).onclick = () => {
-      const from = $('#tr-from', body).value, to = $('#tr-to', body).value, amount = parseFloat($('#tr-amt', body).value);
-      if (from === to) return ($('#tr-err', body).textContent = '付款人和收款人不能相同');
-      if (!(amount > 0)) return ($('#tr-err', body).textContent = '請輸入金額');
-      upsertExpense(g, { ...(existing || {}), id: existing ? existing.id : SL.uid(), t: SL.now(), kind: 'transfer', title: '', amount, cur: existing ? existing.cur : g.base, payer: from, to, date: $('#tr-date', body).value || today() });
-      closeSheet(); saveGroup(g); toast('已記錄還款 💸');
-    };
-    if (existing) $('#tr-del', body).onclick = () => deleteExpense(g, existing);
-  }
-
-  /* ---------------- share ---------------- */
-  async function shareSheet(g) {
-    const code = await SL.encode(g);
-    const base = location.href.split('#')[0];
-    const isWeb = /^https?:/.test(base) && !EMBED;
-    const link = `${base}#g=${code}`;
-    const body = sheet('分享給朋友', `
-      <p class="muted small" style="margin-top:0">整個帳本都在這條連結裡。朋友打開就能看、能記帳；他們記完再把連結傳回來，你打開就會自動合併。</p>
-      <div class="qr hidden" id="sh-qr"></div>
-      <div class="linkbox" id="sh-link">${esc(isWeb ? link : code)}</div>
-      <p class="muted small">${isWeb ? `連結長度 ${link.length} 字元${link.length > 4800 ? '，超過 LINE 單則訊息上限（5000 字），建議改傳 JSON 備份檔' : ''}` : `分享碼 ${code.length} 字元。請把分享碼傳給朋友，在首頁「貼上連結加入」貼上即可。`}</p>
-      <div class="btns">
-        ${isWeb ? '<button class="btn primary" id="sh-copy">複製連結</button>' : ''}
-        ${isWeb && navigator.share ? '<button class="btn" id="sh-native">分享到…</button>' : ''}
-        <button class="btn ${isWeb ? '' : 'primary'}" id="sh-code">複製分享碼</button></div>`);
-    const c = $('#sh-copy', body); if (c) c.onclick = () => { markShared(g); copy(link, '連結已複製，貼到群組吧！'); };
-    const n = $('#sh-native', body); if (n) n.onclick = () => navigator.share({ title: `SplitLink｜${g.name}`, text: `${g.name} 的分帳帳本`, url: link }).then(() => markShared(g), () => {});
-    $('#sh-code', body).onclick = () => { markShared(g); copy(code, '分享碼已複製'); };
-    if (isWeb && link.length < 2900) drawQR(link, $('#sh-qr', body));
-  }
-
-  let qrLib;
-  function drawQR(text, box) {
-    const go = () => {
-      try {
-        const q = window.qrcode(0, 'L'); q.addData(text); q.make();
-        box.innerHTML = q.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
-        box.classList.remove('hidden');
-      } catch {}
-    };
-    if (window.qrcode) return go();
-    if (!qrLib) {
-      qrLib = new Promise((res, rej) => {
-        const s = document.createElement('script');
-        s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
-        s.onload = res; s.onerror = rej; document.head.appendChild(s);
-      });
-    }
-    qrLib.then(go, () => {});
-  }
-
-  async function fetchRates(g) {
-    const curs = $$('[data-rate]').map((i) => i.dataset.rate);
-    if (!curs.length) return;
-    toast('抓取匯率中…');
-    try {
-      const r = await fetch(`https://open.er-api.com/v6/latest/${g.base}`);
-      const j = await r.json();
-      if (j.result !== 'success') throw 0;
-      let n = 0;
-      for (const c of curs) {
-        if (j.rates[c] > 0) { g.rates[c] = { r: +(1 / j.rates[c]).toPrecision(6), t: SL.now() }; n++; }
-      }
-      saveGroup(g); toast(`已更新 ${n} 種匯率`);
-    } catch { toast('抓不到匯率，請手動輸入'); }
-  }
-
-  /* ---------------- settlement image ---------------- */
-  const SITE = 'weeklyship-ai.github.io/splitlink';
-  const FONT = '"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif';
-
-  function settleCanvas(g) {
-    const { bal } = SL.balances(g);
-    const plan = SL.settle({ ...bal });
-    const payees = SL.payeesWithInfo(g, plan);
-    const W = 1080, P = 64, rowH = 132, gap = 18;
-    const listH = plan.length ? plan.length * (rowH + gap) - gap : 200;
-    const payH = payees.length ? 100 + payees.length * 64 : 0;
-    const H = 290 + listH + (payH ? payH + 40 : 0) + 150;
-    const c = document.createElement('canvas');
-    c.width = W; c.height = H;
-    const x = c.getContext('2d');
-    const C = { bg: '#f6f5f1', card: '#ffffff', ink: '#1d1c1a', muted: '#6f6b63', accent: '#1f7a5a', soft: '#e2f1ea' };
-    const font = (w, s) => (x.font = `${w} ${s}px ${FONT}`);
-    const fit = (t, max) => {
-      if (x.measureText(t).width <= max) return t;
-      while (t.length && x.measureText(t + '…').width > max) t = t.slice(0, -1);
-      return t + '…';
-    };
-    const box = (X, Y, w, h, r, fill) => {
-      x.fillStyle = fill; x.beginPath();
-      if (x.roundRect) x.roundRect(X, Y, w, h, r); else x.rect(X, Y, w, h);
-      x.fill();
-    };
-    x.fillStyle = C.bg; x.fillRect(0, 0, W, H);
-    x.fillStyle = C.accent; x.fillRect(0, 0, W, 12);
-    font(700, 30); x.fillStyle = C.accent; x.fillText('分帳結算', P, 92);
-    font(800, 64); x.fillStyle = C.ink; x.fillText(fit(g.name, W - 2 * P), P, 172);
-    font(500, 32); x.fillStyle = C.muted;
-    x.fillText(fit(`總花費 ${SL.fmtMinor(groupTotal(g), g.base)} · ${SL.liveMembers(g).length} 人 · ${plan.length ? `${plan.length} 筆轉帳就結清` : '已結清'}`, W - 2 * P), P, 228);
-    let y = 270;
-    if (!plan.length) {
-      box(P, y, W - 2 * P, 200, 28, C.card);
-      font(700, 48); x.fillStyle = C.accent; x.textAlign = 'center';
-      x.fillText('🎉 大家都結清了！', W / 2, y + 118); x.textAlign = 'left';
-      y += 200;
-    }
-    for (const p of plan) {
-      box(P, y, W - 2 * P, rowH, 28, C.card);
-      font(600, 38);
-      const from = fit(nameOf(g, p.from), 200), to = fit(nameOf(g, p.to), 200);
-      let fx = P + 36;
-      x.fillStyle = C.ink; x.fillText(from, fx, y + 80); fx += x.measureText(from).width + 16;
-      x.fillStyle = C.muted; x.fillText('→', fx, y + 80); fx += x.measureText('→').width + 16;
-      x.fillStyle = C.ink; x.fillText(to, fx, y + 80);
-      font(800, 48); x.fillStyle = C.accent; x.textAlign = 'right';
-      x.fillText(SL.fmtMinor(p.amount, g.base), W - P - 36, y + 84); x.textAlign = 'left';
-      y += rowH + gap;
-    }
-    if (plan.length) y -= gap;
-    if (payees.length) {
-      y += 40;
-      box(P, y, W - 2 * P, payH, 28, C.soft);
-      font(700, 32); x.fillStyle = C.accent; x.fillText('💳 收款資訊', P + 36, y + 60);
-      font(500, 32); x.fillStyle = C.ink;
-      payees.forEach((m, i) => x.fillText(fit(`${m.name}：${m.pay}`, W - 2 * P - 72), P + 36, y + 60 + 64 * (i + 1)));
-    }
-    font(500, 26); x.fillStyle = C.muted;
-    x.fillText(`🔗 SplitLink 分帳連結 · ${SITE}`, P, H - 60);
-    x.textAlign = 'right'; x.fillText(new Date().toLocaleDateString('zh-TW'), W - P, H - 60); x.textAlign = 'left';
-    return c;
-  }
-
-  function canShareFiles() {
-    try { return !EMBED && !!navigator.canShare && navigator.canShare({ files: [new File([''], 'a.png', { type: 'image/png' })] }); } catch { return false; }
-  }
-
-  function imageSheet(g) {
-    const c = settleCanvas(g);
-    const url = c.toDataURL('image/png');
-    const fname = `${g.name}-結算.png`;
-    const blobP = new Promise((res) => c.toBlob(res, 'image/png'));
-    const body = sheet('結算圖片', `<img src="${url}" alt="${esc(g.name)} 的結算圖片" class="settle-img">
-      <p class="muted small">${canShareFiles() ? '按「分享圖片」可以直接傳到 LINE 群組。' : '也可以長按或右鍵圖片另存。'}</p>
-      <div class="btns">
-        ${canShareFiles() ? '<button class="btn primary" id="img-share">分享圖片</button>' : ''}
-        ${window.ClipboardItem && navigator.clipboard && navigator.clipboard.write ? `<button class="btn ${canShareFiles() ? '' : 'primary'}" id="img-copy">複製圖片</button>` : ''}
-        ${EMBED ? '' : '<button class="btn" id="img-dl">下載 PNG</button>'}</div>`);
-    const s = $('#img-share', body);
-    if (s) s.onclick = async () => {
-      const file = new File([await blobP], fname, { type: 'image/png' });
-      navigator.share({ files: [file], title: `${g.name} 分帳結算` }).catch(() => {});
-    };
-    const cp = $('#img-copy', body);
-    if (cp) cp.onclick = () => navigator.clipboard.write([new ClipboardItem({ 'image/png': blobP })])
-      .then(() => toast('圖片已複製，可以直接貼上'), () => toast('這個瀏覽器不能複製圖片，請長按另存'));
-    const dl = $('#img-dl', body);
-    if (dl) dl.onclick = () => {
-      const a = document.createElement('a');
-      a.href = url; a.download = fname; document.body.appendChild(a); a.click(); a.remove();
-    };
-  }
-
-  /* ---------------- install (PWA) ---------------- */
-  let deferredInstall = null;
-  const isStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-  const canOfferInstall = () => !EMBED && !isStandalone() && (deferredInstall || isIOS);
-  window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault(); deferredInstall = e;
-    if (!view.gid) render();
-  });
-  function installApp() {
-    if (deferredInstall) {
-      deferredInstall.prompt();
-      deferredInstall.userChoice.finally(() => { deferredInstall = null; render(); });
-    } else {
-      sheet('加到主畫面', `<ol class="steps">
-        <li>用 <b>Safari</b> 開啟這個網頁（LINE 內建瀏覽器不支援，請先點右下角「⋯」→「用預設瀏覽器開啟」）</li>
-        <li>點下方的 <b>分享</b> 按鈕 <span aria-hidden="true">⬆️</span></li>
-        <li>選 <b>加入主畫面</b></li></ol>
-        <p class="muted small">加到主畫面後可以離線開啟，帳本也不會被 Safari 自動清除。</p>`);
-    }
-  }
-
-  /* ---------------- global click handler ---------------- */
-  document.addEventListener('click', (ev) => {
-    const el = ev.target.closest('[data-act]');
-    if (!el || el.closest('.sheet')) return;
-    const act = el.dataset.act;
-    const g = G();
-    switch (act) {
-      case 'open': openGroup(el.dataset.id); break;
-      case 'home': goHome(); break;
-      case 'theme': {
-        const r = document.documentElement;
-        const dark = r.dataset.theme ? r.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
-        r.dataset.theme = dark ? 'light' : 'dark';
-        try { localStorage.setItem('splitlink:theme', r.dataset.theme); } catch {}
-        break;
-      }
-      case 'new-group': newGroupSheet(); break;
-      case 'import': importSheet(); break;
-      case 'demo': demoGroup(); break;
-      case 'tab': view.tab = el.dataset.tab; render(); window.scrollTo(0, 0); break;
-      case 'who': whoAmISheet(g); break;
-      case 'share': shareSheet(g); break;
-      case 'add': expenseSheet(g); break;
-      case 'add-transfer': transferSheet(g); break;
-      case 'edit': {
-        const e = g.expenses.find((x) => x.id === el.dataset.id);
-        if (e) (e.kind === 'transfer' ? transferSheet(g, e) : expenseSheet(g, e));
-        break;
-      }
-      case 'paid': {
-        const plan = SL.settle({ ...SL.balances(g).bal });
-        const p = plan[+el.dataset.i];
-        if (!p) break;
-        const amt = p.amount / 10 ** SL.decimalsOf(g.base);
-        confirmSheet('確認已還款？', `${nameOf(g, p.from)} 已付給 ${nameOf(g, p.to)} ${SL.fmtMinor(p.amount, g.base)}`, '確認', () => {
-          g.expenses.push({ id: SL.uid(), t: SL.now(), kind: 'transfer', title: '', amount: amt, cur: g.base, payer: p.from, to: p.to, date: today() });
-          saveGroup(g); toast('已記錄 💸');
-        });
-        break;
-      }
-      case 'copy-summary': copy(SL.summaryText(g), '結算文字已複製'); break;
-      case 'copy-pay': {
-        const m = g.members.find((x) => x.id === el.dataset.id);
-        if (m && m.pay) copy(m.pay, `已複製 ${m.name} 的收款資訊`);
-        break;
-      }
-      case 'settle-image': imageSheet(g); break;
-      case 'install': installApp(); break;
-      case 'add-member': {
-        const inp = $('#st-newmem');
-        const name = inp.value.trim();
-        if (!name) return;
-        g.members.push({ id: SL.uid(), name, t: SL.now() });
-        saveGroup(g); toast(`已新增 ${name}`);
-        break;
-      }
-      case 'del-member': {
-        const id = el.dataset.id;
-        const involved = SL.liveExpenses(g).some((e) => e.payer === id || e.to === id || (e.split && e.split.parts && e.split.parts[id] > 0));
-        if (involved) { toast('這位成員還有相關帳目，無法移除'); break; }
-        confirmSheet('移除成員？', nameOf(g, id), '移除', () => {
-          const m = g.members.find((x) => x.id === id);
-          m.del = true; m.t = SL.now(); saveGroup(g);
-        }, true);
-        break;
-      }
-      case 'save-rates': {
-        let n = 0;
-        for (const inp of $$('[data-rate]')) {
-          const r = parseFloat(inp.value);
-          const c = inp.dataset.rate;
-          if (r > 0 && (!g.rates[c] || g.rates[c].r !== r)) { g.rates[c] = { r, t: SL.now() }; n++; }
-        }
-        saveGroup(g); toast(n ? `已儲存 ${n} 個匯率` : '沒有變更');
-        break;
-      }
-      case 'fetch-rates': fetchRates(g); break;
-      case 'csv':
-        if (EMBED) copy(SL.toCSV(g).replace(/^﻿/, ''), 'CSV 已複製，可直接貼到試算表');
-        else download(`${g.name}.csv`, SL.toCSV(g), 'text/csv;charset=utf-8');
-        break;
-      case 'json':
-        if (EMBED) copy(JSON.stringify(g), 'JSON 已複製');
-        else download(`${g.name}.splitlink.json`, JSON.stringify(g, null, 1), 'application/json');
-        break;
-      case 'del-group':
-        confirmSheet('刪除群組？', `「${g.name}」會從這台裝置移除。如果沒有分享過連結，資料將無法復原。`, '刪除', () => {
-          delete db.groups[g.id]; delete db.me[g.id]; delete db.opened[g.id]; persist(); goHome();
-        }, true);
-        break;
-    }
-  });
-
-  // Settings inputs save on change (rename group, base currency, rename members)
-  document.addEventListener('change', (ev) => {
-    const g = G();
-    if (!g || ev.target.closest('.sheet')) return;
-    const t = ev.target;
-    if (t.id === 'st-name' && t.value.trim()) { g.name = t.value.trim(); g.t = SL.now(); saveGroup(g); toast('已更新名稱'); }
-    else if (t.id === 'st-base') {
-      const old = g.base, nb = t.value;
-      // Re-express existing rates in the new base so nothing is lost.
-      const k = SL.rateOf(g, nb); // 1 nb = k old
-      const rates = {};
-      if (k) {
-        for (const [c, r] of Object.entries(g.rates)) if (c !== nb) rates[c] = { r: +(r.r / k).toPrecision(6), t: SL.now() };
-        rates[old] = { r: +(1 / k).toPrecision(6), t: SL.now() };
-      }
-      g.base = nb; g.rates = rates; g.t = SL.now(); saveGroup(g);
-      toast(k ? `主幣別改為 ${nb}` : `主幣別改為 ${nb}，請設定 ${old} 的匯率`);
-    } else if (t.dataset.mpay) {
-      const m = g.members.find((x) => x.id === t.dataset.mpay);
-      const v = t.value.trim().slice(0, 80);
-      if (m && v !== (m.pay || '')) { if (v) m.pay = v; else delete m.pay; m.t = SL.now(); saveGroup(g); toast('已更新收款方式'); }
-    } else if (t.dataset.mname) {
-      const m = g.members.find((x) => x.id === t.dataset.mname);
-      if (m && t.value.trim() && t.value.trim() !== m.name) { m.name = t.value.trim(); m.t = SL.now(); saveGroup(g); toast('已更新'); }
-    }
-  });
-  document.addEventListener('keydown', (ev) => {
-    if (ev.key === 'Enter' && ev.target.id === 'st-newmem') $('[data-act="add-member"]').click();
-  });
-
-  /* ---------------- boot ---------------- */
-  async function handleHash() {
-    const m = location.hash.match(/[#&]g=([A-Za-z0-9_-]+)/);
-    if (!m) return false;
-    history.replaceState(null, '', location.pathname + location.search);
-    try { importGroup(await SL.decode(m[1])); } catch (e) { toast('連結無法讀取：' + (e.message || '')); }
-    return true;
-  }
-  window.addEventListener('hashchange', handleHash);
-
-  (async () => {
-    try { const th = localStorage.getItem('splitlink:theme'); if (th) document.documentElement.dataset.theme = th; } catch {}
-    if (db.last && db.groups[db.last]) view.gid = db.last;
-    render();
-    if (!EMBED && 'serviceWorker' in navigator && location.protocol === 'https:') {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
-    }
-    await handleHash();
-  })();
+  <section class="sec" style="padding-top:0">
+    <div class="container">
+      <div class="final rv">
+        <h2>下次出門前，先開一個群組。</h2>
+        <p>三十秒建立，丟到群組，回來一鍵結清。</p>
+        <a class="btn primary big" href="app/">免費開始分帳 <span class="arr">→</span></a>
+      </div>
+    </div>
+  </section>
+</main>
+<footer class="foot">
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="/splitlink/?home"><img src="/splitlink/icon-192.png" alt="" width="30" height="30">SplitLink</a>
+        <p style="margin:10px 0 0;max-width:28em">免註冊、免下載的分帳工具。整本帳都在一條連結裡，資料不會上傳到任何伺服器。</p>
+      </div>
+      <div>
+        <h4>產品</h4>
+        <ul>
+          <li><a href="/splitlink/app/">開始分帳</a></li>
+          <li><a href="/splitlink/app/?demo">範例帳本</a></li>
+          <li><a href="/splitlink/?home#faq">常見問題</a></li>
+          <li><a href="https://github.com/weeklyship-ai/splitlink">原始碼（GitHub）</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>關於</h4>
+        <ul>
+          <li><a href="/splitlink/terms/">服務條款</a></li>
+          <li><a href="/splitlink/privacy/">隱私權政策</a></li>
+          <li><a href="https://github.com/weeklyship-ai/splitlink/issues/new">回報問題／許願</a></li>
+          <li><a href="mailto:weeklyship@futuracept.com">聯絡我們</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="made">
+      <span>© 2026 WeeklyShip AI · MIT 授權開源</span>
+      <span>🤖 <a href="https://weeklyship-ai.github.io/">WeeklyShip AI</a> 第 01 週作品：由 AI 構思、開發、維護</span>
+    </div>
+  </div>
+</footer>
+<script>
+(() => {
+  const nav = document.getElementById('nav');
+  if (nav) { const f = () => nav.classList.toggle('scrolled', scrollY > 8); f(); addEventListener('scroll', f, { passive: true }); }
+  const els = document.querySelectorAll('.rv');
+  if (!('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('in')); return; }
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+  els.forEach((e) => io.observe(e));
 })();
 </script>
+<script>if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {});</script>
 </body>
 </html>
