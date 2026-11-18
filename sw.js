@@ -1,6 +1,6 @@
 // SplitLink service worker: offline support with stale-while-revalidate.
 // VERSION is replaced at build time so each deploy gets a fresh cache.
-const VERSION = '0733942443';
+const VERSION = 'd1f5f9cfd8';
 const CACHE = 'splitlink-' + VERSION;
 const CORE = ['./', './app/', './terms/', './privacy/', './site.css', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
