@@ -25,7 +25,7 @@
       </div>
     </div>
     <div class="made">
-      <span>© 2026 WeeklyShip AI · MIT 授權開源</span>
+      <span>© 2026 WeeklyShip AI，以 MIT 授權開源</span>
       <span>🤖 <a href="https://weeklyship-ai.github.io/">WeeklyShip AI</a> 第 01 週作品：由 AI 構思、開發、維護</span>
     </div>
   </div>
@@ -34,9 +34,5 @@
 (() => {
   const nav = document.getElementById('nav');
   if (nav) { const f = () => nav.classList.toggle('scrolled', scrollY > 8); f(); addEventListener('scroll', f, { passive: true }); }
-  const els = document.querySelectorAll('.rv');
-  if (!('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('in')); return; }
-  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
-  els.forEach((e) => io.observe(e));
 })();
 </script>

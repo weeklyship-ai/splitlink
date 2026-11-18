@@ -41,126 +41,136 @@
   <section class="hero">
     <div class="container hero-grid">
       <div>
-        <span class="eyebrow">🔗 免註冊・免下載・免費</span>
-        <h1>一條連結，<br>整團的帳<span class="hl">都算清楚</span>。</h1>
-        <p class="lede">出國旅遊、室友合租、朋友聚餐。開網頁記一筆，把連結丟到 LINE 群組，大家點開就能一起記。最後自動算出「誰該給誰多少」，最少幾筆轉帳就結清。</p>
+        <h1>一條連結，<br>整團的帳<br>都算清楚。</h1>
+        <p class="lede">出國、合租、聚餐，誰先墊錢都記下來。把連結丟到 LINE 群組，大家點開就能一起記帳，最後自動算出最少幾筆轉帳就能結清。</p>
         <div class="cta">
-          <a class="btn primary big" href="app/">免費開始分帳 <span class="arr">→</span></a>
-          <a class="btn big" href="app/?demo">看範例帳本</a>
+          <a class="btn primary" href="app/">免費開始分帳</a>
+          <a class="btn" href="app/?demo">打開範例帳本</a>
         </div>
-        <ul class="trust">
-          <li>不用註冊帳號</li><li>沒有每日筆數限制</li><li>資料不上傳伺服器</li><li>可加到主畫面離線使用</li>
-        </ul>
+        <div class="facts">
+          <div><b>0</b>需要註冊的帳號</div>
+          <div><b>無上限</b>每天可記筆數</div>
+          <div><b>0</b>上傳到伺服器的資料</div>
+        </div>
       </div>
-      <div class="mock" aria-label="示意：在 LINE 群組分享 SplitLink 帳本並得到結算結果" role="img">
-        <div class="phone">
-          <div class="phone-top"><div class="av">🗼</div><div><b>東京五日遊</b><span>4 位成員</span></div></div>
-          <div class="chat" aria-hidden="true">
-            <div class="msg me">帳我先記好了，大家有花錢的自己補 👇</div>
-            <div class="linkcard"><div class="lc-img">🔗 SplitLink</div><div class="lc-b"><b>東京五日遊 的分帳帳本</b><span>weeklyship-ai.github.io/splitlink</span></div></div>
-            <div class="msg them"><small>阿傑</small>燒肉我吃兩人份，已經按份數記了 🥩</div>
-            <div class="msg them"><small>Amy</small>藥妝那筆我也補上了，連結傳回來囉</div>
-            <div class="settle">
-              <h4>建議轉帳・3 筆就結清</h4>
-              <div class="tr"><b>Amy</b><span class="to">→ 小明</span><b class="n">NT$16,460</b></div>
-              <div class="tr"><b>阿傑</b><span class="to">→ 小明</span><b class="n">NT$9,118</b></div>
-              <div class="tr"><b>阿傑</b><span class="to">→ 小華</span><b class="n">NT$4,739</b></div>
-            </div>
-          </div>
+      <div class="receipt-wrap" role="img" aria-label="範例收據：東京五日遊 4 人共花費新台幣 75,822 元，3 筆轉帳就能結清">
+        <div class="receipt" aria-hidden="true">
+          <div class="r-head"><b>東京五日遊</b><span>4 人／2026.11.01–11.05</span></div>
+          <div class="r-row"><span>機票 ×4</span><span>小明</span><span>NT$38,400</span></div>
+          <div class="r-row"><span>新宿飯店 4 晚</span><span>小華</span><span>¥96,000</span></div>
+          <div class="r-row"><span>迪士尼門票</span><span>小明</span><span>¥37,600</span></div>
+          <div class="r-row"><span>燒肉（阿傑 2 份）</span><span>小華</span><span>¥18,000</span></div>
+          <div class="r-row"><span>藥妝</span><span>Amy</span><span>¥12,000</span></div>
+          <div class="r-row"><span>Suica 儲值</span><span>Amy</span><span>¥8,000</span></div>
+          <div class="r-row"><span>一蘭拉麵</span><span>阿傑</span><span>¥4,920</span></div>
+          <hr class="r-rule">
+          <div class="r-total"><span>總花費</span><span>NT$75,822</span></div>
+          <hr class="r-rule dbl">
+          <div class="r-note">結清只要 3 筆轉帳</div>
+          <div class="r-pay hi"><span>Amy → 小明</span><b>NT$16,460</b></div>
+          <div class="r-pay"><span>阿傑 → 小明</span><b>NT$9,118</b></div>
+          <div class="r-pay"><span>阿傑 → 小華</span><b>NT$4,739</b></div>
+          <div class="r-foot">日圓依 1 JPY = 0.212 TWD 換算</div>
         </div>
-        <div class="badge-float" aria-hidden="true">✓ 自動合併</div>
-        <div class="badge-float b2" aria-hidden="true">💱 日圓自動換算</div>
+        <div class="linkchip" aria-hidden="true"><span>🔗</span><div><small>整張收據都在這條連結裡</small><span>weeklyship-ai.github.io/splitlink/app/#g=zjVPLbtsw…</span></div></div>
       </div>
     </div>
   </section>
 
-  <section class="sec alt">
+  <section class="sec" id="how">
     <div class="container">
-      <div class="sec-head rv"><span class="kicker">Why</span><h2>分帳 App 最煩的，<br>往往不是算錢。</h2><p>我們把大家最常抱怨的三件事，直接拿掉。</p></div>
-      <div class="pain">
-        <div class="card rv"><div class="x">✕</div><h3>每個人都要下載、註冊</h3><p>出發前一晚還在群組裡拜託大家裝 App、收驗證信，總有人一直沒加入。</p><div class="fix">點開連結就能用</div></div>
-        <div class="card rv" style="--d:.08s"><div class="x">✕</div><h3>免費版開始限制筆數</h3><p>旅行記到一半，跳出「今日記帳次數已達上限」，只好等明天或付費。</p><div class="fix">沒有任何筆數限制</div></div>
-        <div class="card rv" style="--d:.16s"><div class="x">✕</div><h3>帳本被鎖在別人的伺服器</h3><p>要信任一間公司保管你們的消費紀錄，服務收掉資料就跟著不見。</p><div class="fix">帳本就在連結裡，你自己保管</div></div>
+      <h2>三個步驟，不用教就會</h2>
+      <p class="sub">第一次用的朋友，點開連結就知道怎麼記。</p>
+      <ol class="steps">
+        <li><h3>開一個群組</h3><p>填群組名稱和成員，選結算用的幣別。不用帳號，也不用 Email。</p></li>
+        <li><h3>記帳，傳連結</h3><p>誰付了多少、哪些人要分，記完按「分享連結」貼到群組。朋友記完再把連結傳回來，會自動合併。</p></li>
+        <li><h3>一鍵結清</h3><p>自動算出最少轉帳，產生附收款帳號的結算圖片。還完錢按「已還款」，這筆就清了。</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="container split">
+      <div>
+        <h2>為什麼不用再叫大家裝 App</h2>
+        <p class="sub" style="margin:0">常見的分帳 App 好用，但總有幾件事讓人卡住。</p>
+      </div>
+      <div class="tablewrap">
+        <table class="compare">
+          <thead><tr><th scope="col"></th><th scope="col">一般分帳 App</th><th scope="col">SplitLink</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">朋友要先做什麼</th><td class="no">下載 App、註冊帳號、收驗證信</td><td class="us">點開連結</td></tr>
+            <tr><th scope="row">每天能記幾筆</th><td class="no">免費版常有上限</td><td class="us">沒有上限</td></tr>
+            <tr><th scope="row">帳本存在哪裡</th><td class="no">公司的伺服器</td><td class="us">你的瀏覽器和你分享的連結</td></tr>
+            <tr><th scope="row">沒網路時</th><td class="no">多半不能記</td><td class="us">照樣能記，之後再合併</td></tr>
+            <tr><th scope="row">費用與廣告</th><td class="no">進階功能要訂閱</td><td class="us">全部免費，沒有廣告</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </section>
 
   <section class="sec" id="features">
     <div class="container">
-      <div class="sec-head rv"><span class="kicker">Features</span><h2>該有的都有，<br>不該有的一個都沒有。</h2></div>
-      <div class="feats">
-        <div class="card feat rv"><div class="ic">🔗</div><h3>連結就是帳本</h3><p>整本帳壓縮進網址。100 筆帳的連結也不到 3,000 字，LINE 一則訊息就裝得下。</p></div>
-        <div class="card feat rv" style="--d:.06s"><div class="ic">🔀</div><h3>各記各的，自動合併</h3><p>沒網路也能記。每個人把連結傳回群組，打開時以「最後修改」為準自動合併，刪除也會同步。</p></div>
-        <div class="card feat rv" style="--d:.12s"><div class="ic">🧮</div><h3>最少轉帳次數</h3><p>自動抵銷互相欠的錢，n 個人最多 n−1 筆轉帳。每一塊錢都對得上，不會有誤差。</p></div>
-        <div class="card feat rv"><div class="ic">⚖️</div><h3>三種分法</h3><p>平分、按份數（有人吃兩人份）、指定金額。也可以只勾選有參加的人。</p></div>
-        <div class="card feat rv" style="--d:.06s"><div class="ic">💱</div><h3>多幣別換算</h3><p>日圓、韓元、美金混著記，依你設定的匯率換算，也能一鍵抓最新匯率。</p></div>
-        <div class="card feat rv" style="--d:.12s"><div class="ic">📷</div><h3>結算圖片＋收款帳號</h3><p>一鍵產生「誰該給誰多少」的圖片，附上收款帳號，直接傳到群組。</p></div>
+      <h2>該有的功能都在</h2>
+      <p class="sub">從記第一筆到最後轉帳，中間會遇到的狀況都想過了。</p>
+      <dl class="flist">
+        <div><span class="em" aria-hidden="true">⚖️</span><dt>三種分法</dt><dd>平分、按份數（有人吃兩人份）、指定金額，也可以只勾選有參加的人。</dd></div>
+        <div><span class="em" aria-hidden="true">💱</span><dt>日圓、韓元混著記</dt><dd>每筆用原本的幣別記，依你設定的匯率換算；也能一鍵抓最新參考匯率。</dd></div>
+        <div><span class="em" aria-hidden="true">🔀</span><dt>各記各的，自動合併</dt><dd>每筆帳都有自己的修改時間。打開別人傳來的連結，新增的補上、改過的取最新、刪掉的同步刪除。</dd></div>
+        <div><span class="em" aria-hidden="true">🧮</span><dt>最少轉帳，一塊錢都不差</dt><dd>互相欠的錢先抵銷，n 個人最多 n−1 筆轉帳。金額用整數計算，總和一定對得上。</dd></div>
+        <div><span class="em" aria-hidden="true">📷</span><dt>結算圖片附收款帳號</dt><dd>一鍵產生「誰該給誰多少」的圖片，連同每個人的收款方式，直接傳到群組。</dd></div>
+        <div><span class="em" aria-hidden="true">📲</span><dt>加到主畫面，離線也能開</dt><dd>像 App 一樣從主畫面打開，在國外沒網路的時候照樣能記。</dd></div>
+      </dl>
+      <h3 style="margin:56px 0 14px;font-size:18px">大家拿來分什麼帳</h3>
+      <ul class="uses">
+        <li>✈️ 出國旅遊 <span>機票、住宿、交通卡</span></li>
+        <li>🏠 室友合租 <span>房租、水電、網路</span></li>
+        <li>🍻 聚餐 <span>有人沒喝酒也能分得公平</span></li>
+        <li>🛒 團購合買 <span>運費一起平均分</span></li>
+        <li>🎁 合送禮物 <span>誰還沒出錢一目了然</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="sec" id="privacy">
+    <div class="container split">
+      <div>
+        <h2>你的帳，只在你手上</h2>
+        <p class="sub" style="margin:0">SplitLink 沒有資料庫，我們看不到你的帳本。</p>
       </div>
-    </div>
-  </section>
-
-  <section class="sec alt" id="how">
-    <div class="container">
-      <div class="sec-head center rv"><span class="kicker">How it works</span><h2>三個步驟，一分鐘上手</h2></div>
-      <ol class="steps">
-        <li class="card rv"><h3>建立群組</h3><p>輸入群組名稱和成員，選好結算用的幣別。不用帳號、不用 Email。</p></li>
-        <li class="card rv" style="--d:.08s"><h3>記帳、分享連結</h3><p>誰付了多少、哪些人要分，記完按「分享連結」貼到群組，朋友點開就能一起記。</p></li>
-        <li class="card rv" style="--d:.16s"><h3>一鍵結算</h3><p>自動算出最少轉帳，產生結算圖片或文字。還完錢按「已還款」，帳就清了。</p></li>
-      </ol>
-    </div>
-  </section>
-
-  <section class="sec">
-    <div class="container">
-      <div class="sec-head rv"><span class="kicker">Use cases</span><h2>只要是「先幫墊、之後再算」</h2></div>
-      <div class="uses">
-        <div class="card use rv"><div class="em">✈️</div><h3>出國旅遊</h3><p>機票、住宿、交通卡、餐費，台幣日圓混著記，回國一次結清。</p></div>
-        <div class="card use rv" style="--d:.06s"><div class="em">🏠</div><h3>室友合租</h3><p>房租、水電、網路、衛生紙，一個群組用一整年。</p></div>
-        <div class="card use rv" style="--d:.12s"><div class="em">🍻</div><h3>聚餐聚會</h3><p>有人沒喝酒、有人吃比較多？按份數或指定金額，公平又不尷尬。</p></div>
-        <div class="card use rv" style="--d:.18s"><div class="em">🛒</div><h3>團購合買</h3><p>一人先付、大家分攤，運費也能平均分，誰還沒付一目了然。</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="sec alt" id="privacy">
-    <div class="container privacy">
-      <div class="rv">
-        <span class="kicker">Privacy</span>
-        <h2>你的帳，只在你手上。</h2>
-        <ul>
-          <li><span class="ic">🚫</span><div><b>沒有伺服器、沒有帳號</b><span>SplitLink 是純前端網頁，我們沒有資料庫，也看不到你的帳。</span></div></li>
-          <li><span class="ic">🔒</span><div><b>網址 # 後面的內容不會被送出</b><span>瀏覽器開啟連結時，# 之後的帳本資料不會傳給任何伺服器，連 GitHub 也收不到。</span></div></li>
-          <li><span class="ic">📵</span><div><b>沒有追蹤、沒有廣告、沒有 Cookie</b><span>不放分析工具，也不賣任何資料。</span></div></li>
+      <div>
+        <p class="url"><span class="host">https://weeklyship-ai.github.io/splitlink/app/</span><span class="hash">#g=zjVPLbtswEPyVguc4oPmmb02BIMihKtqcCh8YmbaFyqSgR1Ej8L93aUmRUqdFLwZILnd2ZnaGfjD5zzqcR…</span></p>
+        <p class="url-cap">黃色這段就是整本帳本，壓縮後放在網址的 # 後面。瀏覽器開啟網址時，# 後面的內容不會傳給任何伺服器。</p>
+        <ul class="plist">
+          <li><b>沒有帳號，也沒有追蹤</b><span>不放分析工具、不用 Cookie、沒有廣告。</span></li>
+          <li><b>拿到連結的人就看得到帳本</b><span>請只傳給同行的人，不要貼在公開的地方。</span></li>
+          <li><b>想知道細節</b><span>完整說明請看<a href="privacy/">隱私權政策</a>；程式碼也公開在 <a href="https://github.com/weeklyship-ai/splitlink">GitHub</a>。</span></li>
         </ul>
-        <p style="margin-top:20px"><a href="privacy/">閱讀完整隱私權政策 →</a></p>
       </div>
-      <div class="card urlviz rv" style="--d:.1s"><span class="host">https://weeklyship-ai.github.io/splitlink/app/</span><span class="hash">#g=zjVPLbtswEPyVguc4oPmmb02BIMihKtqcCh8YmbaFyqSgR1Ej8L93aUmRUqdFLwZILnd2ZnaGfjD5zzqcR…</span><span class="cap">▲ 綠色這段就是整本帳本（壓縮過）。它只存在於連結和你的瀏覽器裡。<br>提醒：拿到連結的人就能看到帳本，請只傳給同行的人。</span></div>
     </div>
   </section>
 
   <section class="sec" id="faq">
-    <div class="container">
-      <div class="sec-head center rv"><span class="kicker">FAQ</span><h2>常見問題</h2></div>
+    <div class="container split">
+      <h2>常見問題</h2>
       <div class="faq">
-        <details class="rv"><summary>真的完全免費嗎？</summary><p>是的。沒有付費版、沒有廣告，也沒有筆數限制。SplitLink 是 WeeklyShip AI 的開源作品，程式碼以 MIT 授權公開在 GitHub。</p></details>
-        <details class="rv"><summary>朋友需要下載 App 或註冊嗎？</summary><p>不需要。朋友點開連結就能看帳、記帳，手機或電腦的瀏覽器都可以。想要像 App 一樣使用，可以「加到主畫面」，之後沒網路也能打開。</p></details>
-        <details class="rv"><summary>大家同時記帳，資料會不會打架？</summary><p>不會。每筆帳都有自己的編號和修改時間。打開別人傳來的連結時，SplitLink 會逐筆比對，新增的補上、修改過的以最後修改為準、刪除的同步刪除，不會整本被覆蓋。</p></details>
-        <details class="rv"><summary>換手機或清除瀏覽資料，帳會不見嗎？</summary><p>帳本存在瀏覽器的本機儲存空間。清除瀏覽資料前，只要把最新的分享連結留在群組裡，或在「設定」匯出 JSON 備份，隨時都能再匯入回來。</p></details>
-        <details class="rv"><summary>匯率怎麼算？</summary><p>每個群組有一個「主幣別」。記其他幣別時，用你輸入的匯率換算；也可以在設定裡按「抓取最新匯率」，從公開匯率服務取得參考匯率。所有金額都換算成最小單位（例如「分」）的整數計算，總和一定對得上。</p></details>
-        <details class="rv"><summary>連結會不會太長，LINE 傳不出去？</summary><p>帳本會先轉成精簡格式再壓縮。100 筆帳大約 2,700 字元，遠低於 LINE 單則訊息 5,000 字的上限。真的很大本的帳，也可以改傳 JSON 備份檔。</p></details>
-        <details class="rv"><summary>SplitLink 會幫我們轉帳或收款嗎？</summary><p>不會。SplitLink 只負責記帳和計算，不經手任何金錢。實際轉帳請用你們習慣的銀行或支付工具。</p></details>
-        <details class="rv"><summary>遇到問題或想要新功能？</summary><p>到 <a href="https://github.com/weeklyship-ai/splitlink/issues/new">GitHub 開 issue</a>，或寄信到 <a href="mailto:weeklyship@futuracept.com">weeklyship@futuracept.com</a>。我們會依照大家的回饋持續改版。</p></details>
+        <details><summary>真的完全免費嗎？</summary><p>是的。沒有付費版、沒有廣告，也沒有筆數限制。SplitLink 是 WeeklyShip AI 的開源作品，程式碼以 MIT 授權公開在 GitHub。</p></details>
+        <details><summary>朋友需要下載 App 或註冊嗎？</summary><p>不需要。朋友點開連結就能看帳、記帳，手機或電腦的瀏覽器都可以。想要像 App 一樣使用，可以「加到主畫面」，之後沒網路也能打開。</p></details>
+        <details><summary>大家同時記帳，資料會不會打架？</summary><p>不會。每筆帳都有自己的編號和修改時間。打開別人傳來的連結時，SplitLink 會逐筆比對，新增的補上、修改過的以最後修改為準、刪除的同步刪除，不會整本被覆蓋。</p></details>
+        <details><summary>換手機或清除瀏覽資料，帳會不見嗎？</summary><p>帳本存在瀏覽器裡。清除瀏覽資料前，只要把最新的分享連結留在群組裡，或在「設定」匯出 JSON 備份，隨時都能再匯入回來。</p></details>
+        <details><summary>匯率怎麼算？</summary><p>每個群組有一個「主幣別」。記其他幣別時，用你輸入的匯率換算；也可以在設定裡按「抓取最新匯率」，從公開匯率服務取得參考匯率。所有金額都換算成最小單位的整數計算，總和一定對得上。</p></details>
+        <details><summary>連結會不會太長，LINE 傳不出去？</summary><p>帳本會先轉成精簡格式再壓縮。100 筆帳大約 2,700 字元，遠低於 LINE 單則訊息 5,000 字的上限。真的很大本的帳，也可以改傳 JSON 備份檔。</p></details>
+        <details><summary>SplitLink 會幫我們轉帳或收款嗎？</summary><p>不會。SplitLink 只負責記帳和計算，不經手任何金錢。實際轉帳請用你們習慣的銀行或支付工具。</p></details>
+        <details><summary>遇到問題或想要新功能？</summary><p>到 <a href="https://github.com/weeklyship-ai/splitlink/issues/new">GitHub 開 issue</a>，或寄信到 <a href="mailto:weeklyship@futuracept.com">weeklyship@futuracept.com</a>。我們會依照大家的回饋持續改版。</p></details>
       </div>
     </div>
   </section>
 
-  <section class="sec" style="padding-top:0">
+  <section class="final">
     <div class="container">
-      <div class="final rv">
-        <h2>下次出門前，先開一個群組。</h2>
-        <p>三十秒建立，丟到群組，回來一鍵結清。</p>
-        <a class="btn primary big" href="app/">免費開始分帳 <span class="arr">→</span></a>
-      </div>
+      <h2>下次出門前，先開一個群組。</h2>
+      <a class="btn primary" href="app/">免費開始分帳</a>
     </div>
   </section>
 </main>

@@ -7,7 +7,8 @@ const fs = require('fs');
 const path = require('path');
 const SRC = path.join(__dirname, 'src');
 const OUT = path.join(__dirname, 'dist');
-const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf8');
+// Normalise to LF so CSP script hashes match the bytes GitHub Pages serves, whatever the checkout's line endings.
+const read = (f) => fs.readFileSync(path.join(SRC, f), 'utf8').replace(/\r\n/g, '\n');
 const safe = (s) => s.replace(/<\/script/gi, '<\\/script');
 
 // Static pages share _head/_nav/_footer partials: <!--#include _nav.html-->
@@ -22,6 +23,28 @@ const PAGES = [
   ['404.html', '404.html'],
 ];
 
+// Content-Security-Policy as a <meta> tag (GitHub Pages cannot send headers). Inline scripts are allowed by
+// exact SHA-256 hash only, so injected markup can never run script even if escaping were missed somewhere.
+const crypto = require('crypto');
+function withCSP(html, { app = false } = {}) {
+  const hashes = [];
+  html.replace(/<script(?![^>]*\bsrc=)(?![^>]*type="application\/ld\+json")[^>]*>([\s\S]*?)<\/script>/g, (_, body) => {
+    hashes.push(`'sha256-${crypto.createHash('sha256').update(body, 'utf8').digest('base64')}'`);
+  });
+  const csp = [
+    "default-src 'self'",
+    `script-src 'self' ${hashes.join(' ')}${app ? ' https://cdnjs.cloudflare.com' : ''}`,
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: blob:",
+    `connect-src 'self'${app ? ' https://open.er-api.com' : ''}`,
+    "font-src 'self'", "manifest-src 'self'", "worker-src 'self'",
+    "object-src 'none'", "base-uri 'none'", "form-action 'none'",
+  ].join('; ');
+  const meta = `<meta http-equiv="Content-Security-Policy" content="${csp}">\n<meta name="referrer" content="strict-origin-when-cross-origin">`;
+  if (!/<head>\r?\n/.test(html)) throw new Error('CSP: <head> not found');
+  return html.replace(/<head>\r?\n/, (m) => `${m}${meta}\n`);
+}
+
 function build() {
   fs.rmSync(OUT, { recursive: true, force: true });
   const write = (rel, data) => {
@@ -30,7 +53,7 @@ function build() {
     fs.writeFileSync(p, data);
   };
 
-  for (const [from, to] of PAGES) write(to, renderPage(from));
+  for (const [from, to] of PAGES) write(to, withCSP(renderPage(from)));
 
   const style = `<style>\n${read('style.css')}</style>`;
   const core = `<script>\n${safe(read('core.js'))}</script>`;
@@ -39,7 +62,7 @@ function build() {
     .replace('<link rel="stylesheet" href="../style.css">', () => style)
     .replace('<script src="../core.js"></script>', () => core)
     .replace('<script src="../app.js"></script>', () => app);
-  write('app/index.html', appHtml);
+  write('app/index.html', withCSP(appHtml, { app: true }));
   write('embed.html', ['<title>SplitLink 分帳連結</title>', style, '<div id="app"></div>', '<script>window.SPLITLINK_EMBED = true;</script>', core, app].join('\n'));
 
   for (const f of ['site.css', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'og.png']) {

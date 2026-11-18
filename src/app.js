@@ -19,7 +19,16 @@
       if (d && d.groups) {
         const groups = {};
         for (const g of Object.values(d.groups)) { try { const v = SL.validate(g); groups[v.id] = v; } catch {} }
-        return { me: {}, opened: {}, shared: {}, ...d, groups };
+        const okId = (x) => typeof x === 'string' && /^[A-Za-z0-9_-]{1,32}$/.test(x) && x !== '__proto__';
+        const pick = (o, ok) => Object.fromEntries(Object.entries(o && typeof o === 'object' ? o : {}).filter(([k, v]) => groups[k] && ok(v)));
+        return {
+          groups,
+          me: pick(d.me, okId),
+          opened: pick(d.opened, Number.isFinite),
+          shared: pick(d.shared, Number.isFinite),
+          lastCur: pick(d.lastCur, (c) => typeof c === 'string' && /^[A-Z]{3}$/.test(c)),
+          last: groups[d.last] ? d.last : null,
+        };
       }
     } catch {}
     return { groups: {}, me: {}, opened: {}, shared: {} };
@@ -230,9 +239,9 @@
       db.groups[group.id] = group;
       if (!stats.localNewer) db.shared[group.id] = SL.stamp(group);
       persist();
-      const n = stats.expensesAdded + stats.expensesUpdated + stats.membersAdded;
+      const n = stats.expensesAdded + stats.expensesUpdated + stats.membersAdded + stats.membersUpdated;
       openGroup(group.id);
-      const got = n ? `🔀 已合併：新增 ${stats.expensesAdded} 筆、更新 ${stats.expensesUpdated} 筆${stats.membersAdded ? `、新成員 ${stats.membersAdded} 位` : ''}` : '✅ 對方的紀錄你都有了';
+      const got = n ? `🔀 已合併：新增 ${stats.expensesAdded} 筆、更新 ${stats.expensesUpdated} 筆${stats.membersAdded ? `、新成員 ${stats.membersAdded} 位` : ''}${stats.membersUpdated ? `、成員資料（含收款資訊）更新 ${stats.membersUpdated} 位` : ''}` : '✅ 對方的紀錄你都有了';
       toast(stats.localNewer ? `${got}。你有 ${stats.localNewer} 筆對方還沒有，記得把你的連結傳回去` : got, stats.localNewer ? 5000 : undefined);
     } else {
       db.groups[remote.id] = remote; db.shared[remote.id] = SL.stamp(remote); persist();
@@ -679,6 +688,9 @@
       qrLib = new Promise((res, rej) => {
         const s = document.createElement('script');
         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+        // Subresource integrity: refuse the script if the CDN copy is ever altered.
+        s.integrity = 'sha512-ZDSPMa/JM1D+7kdg2x3BsruQ6T/JpJo3jWDWkCZsP+5yVyp1KfESqLI+7RqB5k24F7p2cV7i2YHh/890y6P6Sw==';
+        s.crossOrigin = 'anonymous'; s.referrerPolicy = 'no-referrer';
         s.onload = res; s.onerror = rej; document.head.appendChild(s);
       });
     }
@@ -695,7 +707,8 @@
       if (j.result !== 'success') throw 0;
       let n = 0;
       for (const c of curs) {
-        if (j.rates[c] > 0) { g.rates[c] = { r: +(1 / j.rates[c]).toPrecision(6), t: SL.now() }; n++; }
+        const r = j && j.rates && Number(j.rates[c]) > 0 ? +(1 / Number(j.rates[c])).toPrecision(6) : 0;
+        if (Number.isFinite(r) && r > 0 && r < 1e9) { g.rates[c] = { r, t: SL.now() }; n++; }
       }
       saveGroup(g); toast(`已更新 ${n} 種匯率`);
     } catch { toast('抓不到匯率，請手動輸入'); }
@@ -881,7 +894,7 @@
         if (involved) { toast('這位成員還有相關帳目，無法移除'); break; }
         confirmSheet('移除成員？', nameOf(g, id), '移除', () => {
           const m = g.members.find((x) => x.id === id);
-          m.del = true; m.t = SL.now(); saveGroup(g);
+          m.del = true; delete m.pay; m.t = SL.now(); saveGroup(g);
         }, true);
         break;
       }

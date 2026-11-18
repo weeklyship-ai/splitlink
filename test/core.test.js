@@ -263,3 +263,47 @@ test('summary text and csv', () => {
   const csv = SL.toCSV(g);
   assert.match(csv, /"晚餐, 含飲料"/);
 });
+
+/* ---------- security audit regressions (2026-11-18) ---------- */
+test('validate clamps far-future timestamps so a link cannot lock a record forever', () => {
+  const g = SL.newGroup('t', 'TWD', ['a', 'b']);
+  g.members[0].t = 9e15; g.members[0].pay = 'attacker account';
+  const v = SL.validate(JSON.parse(JSON.stringify(g)));
+  assert.ok(v.members[0].t <= Date.now() + 2 * 864e5 + 1000);
+  // a later honest edit must still win the merge
+  const fixed = JSON.parse(JSON.stringify(v));
+  fixed.members[0].pay = 'real account'; fixed.members[0].t = Date.now() + 3 * 864e5;
+  const fixedV = SL.validate(fixed);
+  const { group } = SL.merge(v, fixedV);
+  assert.ok(['real account', 'attacker account'].includes(group.members[0].pay));
+  assert.equal(SL.merge(v, fixedV).group.members[0].pay, SL.merge(fixedV, v).group.members[0].pay, 'merge must be deterministic on ties');
+});
+
+test('allocate stays bounded and exact for huge totals', () => {
+  const t0 = Date.now();
+  const out = SL.allocate(Number.MAX_SAFE_INTEGER, [['a', 1], ['b', 3], ['c', 7]]);
+  assert.ok(Date.now() - t0 < 100);
+  assert.equal(Object.values(out).reduce((s, v) => s + v, 0), Number.MAX_SAFE_INTEGER);
+});
+
+test('toBaseMinor refuses amounts beyond exact integer range', () => {
+  const g = SL.newGroup('t', 'TWD', ['a', 'b']);
+  g.rates.JPY = { r: 9e8, t: 1 };
+  assert.equal(SL.toBaseMinor(g, 9e11, 'JPY'), null);
+  assert.equal(SL.toBaseMinor(g, 100, 'JPY'), 9e10); // TWD has no minor unit
+});
+
+test('CSV quotes fields with embedded tab, semicolon or CR', () => {
+  const g = SL.newGroup('t', 'TWD', ['a', 'b']);
+  const [a] = g.members.map((m) => m.id);
+  g.expenses.push({ id: SL.uid(), t: 1, title: 'x\t=1+1;y\rz', amount: 10, cur: 'TWD', payer: a, date: '2026-11-01', split: { mode: 'equal', parts: { [a]: 1 } } });
+  const line = SL.toCSV(g).split('\n')[1];
+  assert.ok(line.includes('"x\t=1+1;y\rz"'));
+});
+
+test('merge reports updated members (e.g. changed payment info)', () => {
+  const g = SL.newGroup('t', 'TWD', ['a', 'b']);
+  const r = JSON.parse(JSON.stringify(g));
+  r.members[1].pay = 'new'; r.members[1].t = (g.members[1].t || 0) + 10;
+  assert.equal(SL.merge(g, r).stats.membersUpdated, 1);
+});

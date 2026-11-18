@@ -1,6 +1,8 @@
 <!doctype html>
 <html lang="zh-Hant-TW">
 <head>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Wr2qqZ4q+8/7mrNaaGF8Q96zNF9GPVDBkN+RVmFmdKo=' 'sha256-Yh8fjJiBnR8N0etnLqcKt9Cg7MsU1/u0KVoHVgqvYSg=' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self' https://open.er-api.com; font-src 'self'; manifest-src 'self'; worker-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SplitLink 分帳連結｜免註冊，一條連結就能分帳</title>
@@ -369,7 +371,10 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
     });
     let left = abs - used;
     rema.sort((a, b) => b.r - a.r || a.i - b.i);
-    for (let k = 0; left > 0; k = (k + 1) % rema.length, left--) out[rema[k].id] += 1;
+    // Mathematically 0 <= left < rema.length; bound the loop anyway so float error can never make it spin.
+    const steps = Math.min(Math.max(left, 0), rema.length);
+    for (let k = 0; k < steps; k++) out[rema[k].id] += 1;
+    if (left > steps) out[rema[0].id] += left - steps;
     if (sign < 0) for (const id in out) out[id] = -out[id];
     return out;
   }
@@ -384,7 +389,8 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
   function toBaseMinor(group, amount, cur) {
     const rate = rateOf(group, cur);
     if (rate == null) return null;
-    return Math.round(amount * rate * 10 ** decimalsOf(group.base));
+    const v = Math.round(amount * rate * 10 ** decimalsOf(group.base));
+    return Number.isSafeInteger(v) ? v : null;
   }
 
   function liveMembers(group) { return group.members.filter((m) => !m.del); }
@@ -478,7 +484,7 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
     for (const y of b) {
       const x = map.get(y.id);
       if (!x) { map.set(y.id, y); if (!y.del) added++; }
-      else if ((y.t || 0) > (x.t || 0)) { map.set(y.id, y); updated++; }
+      else if ((y.t || 0) > (x.t || 0) || ((y.t || 0) === (x.t || 0) && JSON.stringify(y) > JSON.stringify(x))) { map.set(y.id, y); updated++; }
     }
     // keep original order for stable member ordering; new items appended
     const order = [...a.map((x) => x.id), ...b.map((y) => y.id)];
@@ -518,7 +524,7 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
     return {
       group: { ...local, name: meta.name, base: meta.base, t: meta.t, rates, members: m.list, expenses: e.list },
       stats: {
-        expensesAdded: e.added, expensesUpdated: e.updated, membersAdded: m.added,
+        expensesAdded: e.added, expensesUpdated: e.updated, membersAdded: m.added, membersUpdated: m.updated,
         // records only this device has (or edited later): the other side is missing them
         localNewer: e.localNewer + m.localNewer,
       },
@@ -661,7 +667,12 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
   const isCur = (x) => typeof x === 'string' && CUR_RE.test(x);
   const num = (x) => (typeof x === 'number' && Number.isFinite(x) ? x : Number(x));
   const finitePos = (x, max) => { const n = num(x); return Number.isFinite(n) && n > 0 && n < max ? n : null; };
-  const ts = (x) => { const n = num(x); return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0; };
+  const MAX_SKEW = 2 * 864e5; // tolerate devices whose clock runs up to 2 days fast
+  const ts = (x) => {
+    const n = num(x);
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.min(Math.floor(n), Date.now() + MAX_SKEW);
+  };
   const str = (x, max) => (typeof x === 'string' || typeof x === 'number' ? String(x).slice(0, max) : '');
 
   function validate(g) {
@@ -761,7 +772,7 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
 
   function toCSV(group) {
     const name = (id) => (group.members.find((m) => m.id === id) || {}).name || '';
-    const esc = (v) => { let s = String(v ?? ''); if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const esc = (v) => { let s = String(v ?? ''); if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",;\n\r\t]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     const rows = [['日期', '項目', '類別', '金額', '幣別', `換算(${group.base})`, '付款人', '分攤']];
     for (const e of liveExpenses(group)) {
       const fx = expenseEffect(group, e);
@@ -801,7 +812,16 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
       if (d && d.groups) {
         const groups = {};
         for (const g of Object.values(d.groups)) { try { const v = SL.validate(g); groups[v.id] = v; } catch {} }
-        return { me: {}, opened: {}, shared: {}, ...d, groups };
+        const okId = (x) => typeof x === 'string' && /^[A-Za-z0-9_-]{1,32}$/.test(x) && x !== '__proto__';
+        const pick = (o, ok) => Object.fromEntries(Object.entries(o && typeof o === 'object' ? o : {}).filter(([k, v]) => groups[k] && ok(v)));
+        return {
+          groups,
+          me: pick(d.me, okId),
+          opened: pick(d.opened, Number.isFinite),
+          shared: pick(d.shared, Number.isFinite),
+          lastCur: pick(d.lastCur, (c) => typeof c === 'string' && /^[A-Z]{3}$/.test(c)),
+          last: groups[d.last] ? d.last : null,
+        };
       }
     } catch {}
     return { groups: {}, me: {}, opened: {}, shared: {} };
@@ -1012,9 +1032,9 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
       db.groups[group.id] = group;
       if (!stats.localNewer) db.shared[group.id] = SL.stamp(group);
       persist();
-      const n = stats.expensesAdded + stats.expensesUpdated + stats.membersAdded;
+      const n = stats.expensesAdded + stats.expensesUpdated + stats.membersAdded + stats.membersUpdated;
       openGroup(group.id);
-      const got = n ? `🔀 已合併：新增 ${stats.expensesAdded} 筆、更新 ${stats.expensesUpdated} 筆${stats.membersAdded ? `、新成員 ${stats.membersAdded} 位` : ''}` : '✅ 對方的紀錄你都有了';
+      const got = n ? `🔀 已合併：新增 ${stats.expensesAdded} 筆、更新 ${stats.expensesUpdated} 筆${stats.membersAdded ? `、新成員 ${stats.membersAdded} 位` : ''}${stats.membersUpdated ? `、成員資料（含收款資訊）更新 ${stats.membersUpdated} 位` : ''}` : '✅ 對方的紀錄你都有了';
       toast(stats.localNewer ? `${got}。你有 ${stats.localNewer} 筆對方還沒有，記得把你的連結傳回去` : got, stats.localNewer ? 5000 : undefined);
     } else {
       db.groups[remote.id] = remote; db.shared[remote.id] = SL.stamp(remote); persist();
@@ -1461,6 +1481,9 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
       qrLib = new Promise((res, rej) => {
         const s = document.createElement('script');
         s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+        // Subresource integrity: refuse the script if the CDN copy is ever altered.
+        s.integrity = 'sha512-ZDSPMa/JM1D+7kdg2x3BsruQ6T/JpJo3jWDWkCZsP+5yVyp1KfESqLI+7RqB5k24F7p2cV7i2YHh/890y6P6Sw==';
+        s.crossOrigin = 'anonymous'; s.referrerPolicy = 'no-referrer';
         s.onload = res; s.onerror = rej; document.head.appendChild(s);
       });
     }
@@ -1477,7 +1500,8 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
       if (j.result !== 'success') throw 0;
       let n = 0;
       for (const c of curs) {
-        if (j.rates[c] > 0) { g.rates[c] = { r: +(1 / j.rates[c]).toPrecision(6), t: SL.now() }; n++; }
+        const r = j && j.rates && Number(j.rates[c]) > 0 ? +(1 / Number(j.rates[c])).toPrecision(6) : 0;
+        if (Number.isFinite(r) && r > 0 && r < 1e9) { g.rates[c] = { r, t: SL.now() }; n++; }
       }
       saveGroup(g); toast(`已更新 ${n} 種匯率`);
     } catch { toast('抓不到匯率，請手動輸入'); }
@@ -1663,7 +1687,7 @@ kbd { font: 600 11px/1 ui-monospace, Consolas, monospace; border: 1px solid var(
         if (involved) { toast('這位成員還有相關帳目，無法移除'); break; }
         confirmSheet('移除成員？', nameOf(g, id), '移除', () => {
           const m = g.members.find((x) => x.id === id);
-          m.del = true; m.t = SL.now(); saveGroup(g);
+          m.del = true; delete m.pay; m.t = SL.now(); saveGroup(g);
         }, true);
         break;
       }

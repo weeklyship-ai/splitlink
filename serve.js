@@ -9,12 +9,14 @@ const BASE = '/splitlink/';
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.webmanifest': 'application/manifest+json' };
 
 http.createServer((req, res) => {
-  let p = decodeURIComponent(new URL(req.url, 'http://x').pathname);
+  let p;
+  try { p = decodeURIComponent(new URL(req.url, 'http://x').pathname); } catch { res.writeHead(400); return res.end(); }
   if (!p.startsWith(BASE)) { res.writeHead(302, { location: BASE }); return res.end(); }
   p = p.slice(BASE.length);
   if (p === '' || p.endsWith('/')) p += 'index.html';
   const file = path.join(root, p);
-  if (!file.startsWith(root) || path.basename(file).startsWith('_')) { res.writeHead(403); return res.end(); }
+  const relp = path.relative(root, file);
+  if (relp.startsWith('..') || path.isAbsolute(relp) || path.basename(file).startsWith('_')) { res.writeHead(403); return res.end(); }
   const send = (code, data, ext) => {
     res.writeHead(code, { 'content-type': types[ext] || 'application/octet-stream', 'cache-control': 'no-store' });
     res.end(data);
@@ -26,4 +28,4 @@ http.createServer((req, res) => {
     if (rel.endsWith('.html') && rel !== 'app/index.html') return send(200, renderPage(rel), '.html');
     fs.readFile(file, (e, data) => (e ? send(500, 'error', '.html') : send(200, data, path.extname(file))));
   });
-}).listen(port, () => console.log(`SplitLink dev server: http://localhost:${port}${BASE}`));
+}).listen(port, '127.0.0.1', () => console.log(`SplitLink dev server: http://localhost:${port}${BASE}`));

@@ -80,7 +80,10 @@
     });
     let left = abs - used;
     rema.sort((a, b) => b.r - a.r || a.i - b.i);
-    for (let k = 0; left > 0; k = (k + 1) % rema.length, left--) out[rema[k].id] += 1;
+    // Mathematically 0 <= left < rema.length; bound the loop anyway so float error can never make it spin.
+    const steps = Math.min(Math.max(left, 0), rema.length);
+    for (let k = 0; k < steps; k++) out[rema[k].id] += 1;
+    if (left > steps) out[rema[0].id] += left - steps;
     if (sign < 0) for (const id in out) out[id] = -out[id];
     return out;
   }
@@ -95,7 +98,8 @@
   function toBaseMinor(group, amount, cur) {
     const rate = rateOf(group, cur);
     if (rate == null) return null;
-    return Math.round(amount * rate * 10 ** decimalsOf(group.base));
+    const v = Math.round(amount * rate * 10 ** decimalsOf(group.base));
+    return Number.isSafeInteger(v) ? v : null;
   }
 
   function liveMembers(group) { return group.members.filter((m) => !m.del); }
@@ -189,7 +193,7 @@
     for (const y of b) {
       const x = map.get(y.id);
       if (!x) { map.set(y.id, y); if (!y.del) added++; }
-      else if ((y.t || 0) > (x.t || 0)) { map.set(y.id, y); updated++; }
+      else if ((y.t || 0) > (x.t || 0) || ((y.t || 0) === (x.t || 0) && JSON.stringify(y) > JSON.stringify(x))) { map.set(y.id, y); updated++; }
     }
     // keep original order for stable member ordering; new items appended
     const order = [...a.map((x) => x.id), ...b.map((y) => y.id)];
@@ -229,7 +233,7 @@
     return {
       group: { ...local, name: meta.name, base: meta.base, t: meta.t, rates, members: m.list, expenses: e.list },
       stats: {
-        expensesAdded: e.added, expensesUpdated: e.updated, membersAdded: m.added,
+        expensesAdded: e.added, expensesUpdated: e.updated, membersAdded: m.added, membersUpdated: m.updated,
         // records only this device has (or edited later): the other side is missing them
         localNewer: e.localNewer + m.localNewer,
       },
@@ -372,7 +376,12 @@
   const isCur = (x) => typeof x === 'string' && CUR_RE.test(x);
   const num = (x) => (typeof x === 'number' && Number.isFinite(x) ? x : Number(x));
   const finitePos = (x, max) => { const n = num(x); return Number.isFinite(n) && n > 0 && n < max ? n : null; };
-  const ts = (x) => { const n = num(x); return Number.isFinite(n) && n >= 0 ? Math.floor(n) : 0; };
+  const MAX_SKEW = 2 * 864e5; // tolerate devices whose clock runs up to 2 days fast
+  const ts = (x) => {
+    const n = num(x);
+    if (!Number.isFinite(n) || n < 0) return 0;
+    return Math.min(Math.floor(n), Date.now() + MAX_SKEW);
+  };
   const str = (x, max) => (typeof x === 'string' || typeof x === 'number' ? String(x).slice(0, max) : '');
 
   function validate(g) {
@@ -472,7 +481,7 @@
 
   function toCSV(group) {
     const name = (id) => (group.members.find((m) => m.id === id) || {}).name || '';
-    const esc = (v) => { let s = String(v ?? ''); if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    const esc = (v) => { let s = String(v ?? ''); if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = "'" + s; return /[",;\n\r\t]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
     const rows = [['日期', '項目', '類別', '金額', '幣別', `換算(${group.base})`, '付款人', '分攤']];
     for (const e of liveExpenses(group)) {
       const fx = expenseEffect(group, e);
