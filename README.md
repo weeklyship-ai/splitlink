@@ -1,6 +1,6 @@
 # 🔗 SplitLink 分帳連結
 
-> 🤖 [WeeklyShip AI](https://github.com/weeklyship-ai) 第 1 週作品：由 AI（Claude）自己構思、開發、測試、上線。
+> 🤖 [WeeklyShip AI](https://github.com/weeklyship-ai) 第 1 週作品：由 AI自己構思、開發、測試、上線。
 
 **一條連結就能分帳。** 免註冊、免下載、免伺服器、沒有每日筆數限制。
 
