@@ -94,7 +94,11 @@
     return body;
   }
   function closeSheet() {
-    $$('.scrim').forEach((s) => s.remove());
+    // Animate out; capture the nodes now so a sheet opened meanwhile is not removed.
+    $$('.scrim:not(.closing)').forEach((el) => {
+      el.classList.add('closing');
+      setTimeout(() => el.remove(), matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 170);
+    });
     document.body.style.overflow = '';
   }
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
@@ -108,11 +112,27 @@
   }
 
   /* ---------------- render root ---------------- */
+  // Entrance animations play only when the screen changes (new group / tab), not on every re-render after an edit.
+  let lastScreen = null;
+  let flashId = null; // expense row to highlight after it was added or edited
+  const wide = () => matchMedia('(min-width: 1024px)').matches;
   function render() {
     const app = $('#app');
     if (view.gid && !G()) view.gid = null;
+    const screen = view.gid ? `${view.gid}:${view.tab}` : 'home';
     app.innerHTML = view.gid ? groupView(G()) : homeView();
+    app.classList.toggle('enter', screen !== lastScreen);
+    lastScreen = screen;
+    if (flashId) {
+      const row = $(`[data-act="edit"][data-id="${CSS.escape(flashId)}"]`, app);
+      if (row) { row.classList.add('flash'); if (!wide()) row.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+      flashId = null;
+    }
   }
+  const footLinks = () => `<nav class="app-links" aria-label="相關連結">
+      <a href="../?home">關於 SplitLink</a><a href="../terms/">服務條款</a><a href="../privacy/">隱私權政策</a>
+      <a href="https://github.com/weeklyship-ai/splitlink/issues/new" target="_blank" rel="noopener">回報問題／許願</a>
+      <span>🤖 <a href="https://weeklyship-ai.github.io/" target="_blank" rel="noopener">WeeklyShip AI</a> 第 01 週作品</span></nav>`;
 
   /* ---------------- home ---------------- */
   function groupTotal(g) {
@@ -137,26 +157,28 @@
         <div class="amt">${right}</div></button>`;
     }).join('');
 
-    return `
-    <header class="top"><div class="top-in"><h1>🔗 SplitLink <span class="muted" style="font-weight:500">分帳連結</span></h1><span class="grow"></span>
-      <button class="icon-btn" data-act="theme" aria-label="切換深淺色">◐</button></div></header>
-    <main class="wrap">
-      ${gs.length ? '' : `<section class="hero"><h2>出遊、室友、聚餐，<br>一條連結就能分帳。</h2>
-        <p>不用註冊、不用下載 App、沒有每日筆數限制。資料只存在你的手機和分享連結裡。</p></section>
-        <div class="feats">
-          <div class="feat"><b>🔗 連結即資料</b>整個帳本壓縮進網址，丟到 LINE 群組大家就能看。</div>
-          <div class="feat"><b>🔀 離線各記各的</b>每個人都能自己記帳，再把連結傳回來就會自動合併。</div>
-          <div class="feat"><b>🧮 最少轉帳次數</b>自動算出誰該付誰，n 個人最多 n−1 筆轉帳。</div>
-          <div class="feat"><b>💱 多幣別</b>日圓、韓元、美金混著記，依匯率換算成主幣別。</div>
-        </div>`}
-      <div class="btns" style="margin:16px 0">
+    const actions = `<div class="btns home-actions">
         <button class="btn primary" data-act="new-group">＋ 建立新群組</button>
         <button class="btn" data-act="import">貼上連結加入</button>
-        ${gs.length ? '' : '<button class="btn" data-act="demo">看範例</button>'}
+        ${gs.length ? '' : '<button class="btn" data-act="demo">看範例帳本</button>'}
         ${canOfferInstall() ? '<button class="btn" data-act="install">📲 加到主畫面</button>' : ''}
-      </div>
-      ${gs.length ? `<div class="day">我的群組</div><div class="list">${cards}</div>` : ''}
-      <footer class="foot">資料只存在這台裝置的瀏覽器中，清除瀏覽資料前請先分享連結備份。</footer>
+      </div>`;
+    const body = gs.length
+      ? `<div class="home-head"><div><h2 class="home-title">我的群組</h2><p class="muted small" style="margin:2px 0 0">${gs.length} 個群組 · 依最近開啟排序</p></div>${actions}</div>
+        <div class="gcards">${cards}</div>`
+      : `<section class="welcome">
+          <div class="welcome-art" aria-hidden="true"><span>🧾</span><span>🔗</span><span>💸</span></div>
+          <h2>開一個群組，開始分帳</h2>
+          <p class="muted">不用註冊、不用下載 App。記完帳按「分享連結」貼到群組，朋友點開就能一起記。</p>
+          ${actions}
+          <p class="small muted" style="margin-top:18px">第一次用？<a href="../?home">看看 SplitLink 怎麼運作 →</a></p>
+        </section>`;
+    return `
+    <header class="top"><div class="top-in"><a class="logo" href="../?home" aria-label="SplitLink 首頁">🔗 SplitLink <span class="muted" style="font-weight:500">分帳連結</span></a><span class="grow"></span>
+      <button class="icon-btn" data-act="theme" aria-label="切換深淺色">◐</button></div></header>
+    <main class="wrap">
+      ${body}
+      <footer class="foot"><p>資料只存在這台裝置的瀏覽器中，清除瀏覽資料前請先分享連結備份。</p>${footLinks()}</footer>
     </main>`;
   }
 
@@ -219,8 +241,9 @@
     }
   }
 
+  const DEMO_NAME = '東京五日遊（範例）';
   function demoGroup() {
-    const g = SL.newGroup('東京五日遊（範例）', 'TWD', ['小明', '小華', '阿傑', 'Amy']);
+    const g = SL.newGroup(DEMO_NAME, 'TWD', ['小明', '小華', '阿傑', 'Amy']);
     const [a, b, c, d] = g.members.map((m) => m.id);
     g.rates.JPY = { r: 0.212, t: SL.now() };
     g.members[0].pay = '範例銀行 000-1234567890（請改成你的帳號）';
@@ -246,18 +269,39 @@
     const me = meOf(g);
     const tabs = TABS.map(([id, l]) => `<button class="tab ${view.tab === id ? 'on' : ''}" data-act="tab" data-tab="${id}">${l}</button>`).join('');
     let body = '';
-    if (view.tab === 'list') body = listTab(g, me);
+    // Desktop: the ledger gets a live settlement panel beside it instead of a lonely centered column.
+    if (view.tab === 'list') body = `<div class="cols"><div class="col-main">${listTab(g, me)}</div><aside class="col-side" aria-label="結算摘要">${sidePanel(g, me)}</aside></div>`;
     else if (view.tab === 'settle') body = settleTab(g, me);
     else if (view.tab === 'stats') body = statsTab(g, me);
     else body = settingsTab(g, me);
     return `
     <header class="top"><div class="top-in">
-      <button class="icon-btn" data-act="home" aria-label="返回">←</button>
+      <button class="icon-btn" data-act="home" aria-label="返回群組列表">←</button>
       <h1 class="grow ellipsis">${esc(g.name)}</h1>
+      ${view.tab === 'list' ? '<button class="btn sm add-inline" data-act="add" title="快捷鍵 N">＋ 記一筆</button>' : ''}
       <button class="btn sm primary share-btn" data-act="share">分享連結${SL.stamp(g) > (db.shared[g.id] || 0) && SL.liveExpenses(g).length ? '<span class="dot" title="有還沒分享出去的變更"></span>' : ''}</button></div>
-      <nav class="tabs">${tabs}</nav></header>
-    <main class="wrap">${body}</main>
+      <nav class="tabs" aria-label="群組分頁">${tabs}</nav></header>
+    <main class="wrap">${body}<footer class="foot">${footLinks()}</footer></main>
     ${view.tab === 'list' ? '<button class="fab" data-act="add">＋ 記一筆</button>' : ''}`;
+  }
+
+  function sidePanel(g, me) {
+    const { bal } = SL.balances(g);
+    const plan = SL.settle({ ...bal });
+    const maxAbs = Math.max(1, ...Object.values(bal).map(Math.abs));
+    const rows = SL.liveMembers(g).map((m) => {
+      const v = bal[m.id] || 0;
+      return `<div class="sp-row"><span class="grow ellipsis">${esc(m.name)}${m.id === me ? ' <span class="muted small">（我）</span>' : ''}</span>
+        <b class="num small ${v > 0 ? 'pos' : v < 0 ? 'neg' : 'muted'}">${v === 0 ? '0' : (v > 0 ? '+' : '−') + SL.fmtMinor(Math.abs(v), g.base)}</b></div>
+        <div class="dbar"><i class="${v >= 0 ? 'p' : 'n'}" style="width:${(Math.abs(v) / maxAbs) * 50}%"></i></div>`;
+    }).join('');
+    const tr = plan.length ? plan.map((p) => `<div class="sp-tr ${p.from === me || p.to === me ? 'mine' : ''}"><span class="ellipsis"><b>${esc(nameOf(g, p.from))}</b> <span class="muted">→</span> <b>${esc(nameOf(g, p.to))}</b></span>
+        <b class="num">${SL.fmtMinor(p.amount, g.base)}</b></div>`).join('')
+      : '<p class="muted small" style="margin:6px 0 0">🎉 目前大家都結清了</p>';
+    return `<div class="card"><h3>每個人的餘額</h3>${rows}</div>
+      <div class="card"><h3>建議轉帳${plan.length ? `<span class="muted small" style="font-weight:500"> · ${plan.length} 筆就結清</span>` : ''}</h3>${tr}
+        <div class="btns" style="margin-top:12px"><button class="btn sm primary" data-act="tab" data-tab="settle">去結算</button><button class="btn sm" data-act="settle-image">📷 結算圖片</button></div></div>
+      <p class="muted small kbd-hint">快捷鍵：<kbd>N</kbd> 記一筆 · <kbd>S</kbd> 分享 · <kbd>Esc</kbd> 關閉視窗</p>`;
   }
 
   function meBar(g, me) {
@@ -346,15 +390,15 @@
         <div class="num" style="font-size:18px;font-weight:650">${SL.fmtMinor(p.amount, g.base)}</div>${pay}</div>
         <button class="btn sm" data-act="paid" data-i="${i}">已還款</button></div>`;
     }).join('') : '<div class="empty" style="padding:24px"><div class="big">🎉</div><p>大家都結清了！</p></div>';
-    return meBar(g, me) + missingBanner(g, missingRates) + `
-      <div class="card"><h3>每個人的餘額</h3><div class="muted small">＋ 代表別人欠他，− 代表他該付錢</div>${rows}</div>
-      <div class="day">建議轉帳（${plan.length} 筆就能結清）</div>
+    return meBar(g, me) + missingBanner(g, missingRates) + `<div class="grid2">
+      <div><div class="card"><h3>每個人的餘額</h3><div class="muted small">＋ 代表別人欠他，− 代表他該付錢</div>${rows}</div></div>
+      <div><div class="day">建議轉帳（${plan.length} 筆就能結清）</div>
       <div class="list">${planHtml}</div>
       <div class="btns" style="margin-top:14px">
         <button class="btn primary" data-act="settle-image">📷 結算圖片</button>
         <button class="btn" data-act="copy-summary">複製結算文字</button>
         <button class="btn" data-act="add-transfer">手動記一筆還款</button></div>
-      ${plan.length && !SL.payeesWithInfo(g, plan).length ? '<p class="muted small">💡 到「設定 → 成員」填上收款帳號，結算時就會顯示給要付錢的人。</p>' : ''}`;
+      ${plan.length && !SL.payeesWithInfo(g, plan).length ? '<p class="muted small">💡 到「設定 → 成員」填上收款帳號，結算時就會顯示給要付錢的人。</p>' : ''}</div></div>`;
   }
 
   function statsTab(g, me) {
@@ -381,8 +425,8 @@
     return `<div class="summary">
       <div class="stat"><div class="k">總花費</div><div class="v num">${SL.fmtMinor(total, g.base)}</div></div>
       <div class="stat"><div class="k">每人平均</div><div class="v num">${SL.fmtMinor(Math.round(total / Math.max(1, mem.length)), g.base)}</div>${days > 1 ? `<div class="k">共 ${days} 天，日均 ${SL.fmtMinor(Math.round(total / days), g.base)}</div>` : ''}</div></div>
-      <div class="card"><h3>依類別</h3>${catHtml}</div>
-      <div class="card"><h3>每個人</h3><div class="muted small">「付出」是實際掏錢，「花費」是他該負擔的份</div>${memHtml}</div>`;
+      <div class="grid2"><div class="card"><h3>依類別</h3>${catHtml}</div>
+      <div class="card"><h3>每個人</h3><div class="muted small">「付出」是實際掏錢，「花費」是他該負擔的份</div>${memHtml}</div></div>`;
   }
 
   function settingsTab(g, me) {
@@ -395,7 +439,7 @@
     const mems = SL.liveMembers(g).map((m) => `<div class="mem-row"><div class="row"><input class="in grow" data-mname="${esc(m.id)}" value="${esc(m.name)}" maxlength="20" aria-label="成員名稱">
       <button class="icon-btn" data-act="del-member" data-id="${esc(m.id)}" aria-label="移除 ${esc(m.name)}">🗑</button></div>
       <input class="in small" data-mpay="${esc(m.id)}" value="${esc(m.pay || '')}" maxlength="80" placeholder="收款方式（選填）例：國泰 013-1234567890、LINE Pay" aria-label="${esc(m.name)} 的收款方式"></div>`).join('');
-    return `
+    return `<div class="grid2 settings">
       <div class="card"><h3>群組</h3>
         <label class="f"><span>名稱</span><input class="in" id="st-name" value="${esc(g.name)}" maxlength="40"></label>
         <label class="f"><span>主幣別（結算時使用）</span><select class="in" id="st-base">${opts}</select></label></div>
@@ -407,7 +451,7 @@
         <button class="btn sm" data-act="csv">${EMBED ? '複製 CSV' : '匯出 CSV（Excel）'}</button>
         <button class="btn sm" data-act="json">${EMBED ? '複製 JSON 備份' : '下載 JSON 備份'}</button></div></div>
       <div class="card"><h3>危險區域</h3><p class="muted small">只會從這台裝置刪除，不影響其他人手上的連結。</p>
-        <button class="btn danger" data-act="del-group">從這台裝置刪除群組</button></div>`;
+        <button class="btn danger" data-act="del-group">從這台裝置刪除群組</button></div></div>`;
   }
 
   /* ---------------- who am I ---------------- */
@@ -553,6 +597,7 @@
       };
       upsertExpense(g, rec);
       db.lastCur = db.lastCur || {}; db.lastCur[g.id] = d.cur;
+      flashId = rec.id;
       closeSheet(); saveGroup(g);
       toast(existing ? '已更新' : '已新增 ✓');
     };
@@ -591,7 +636,9 @@
       const from = $('#tr-from', body).value, to = $('#tr-to', body).value, amount = parseFloat($('#tr-amt', body).value);
       if (from === to) return ($('#tr-err', body).textContent = '付款人和收款人不能相同');
       if (!(amount > 0)) return ($('#tr-err', body).textContent = '請輸入金額');
-      upsertExpense(g, { ...(existing || {}), id: existing ? existing.id : SL.uid(), t: SL.now(), kind: 'transfer', title: '', amount, cur: existing ? existing.cur : g.base, payer: from, to, date: $('#tr-date', body).value || today() });
+      const tid = existing ? existing.id : SL.uid();
+      flashId = tid;
+      upsertExpense(g, { ...(existing || {}), id: tid, t: SL.now(), kind: 'transfer', title: '', amount, cur: existing ? existing.cur : g.base, payer: from, to, date: $('#tr-date', body).value || today() });
       closeSheet(); saveGroup(g); toast('已記錄還款 💸');
     };
     if (existing) $('#tr-del', body).onclick = () => deleteExpense(g, existing);
@@ -893,6 +940,13 @@
   });
   document.addEventListener('keydown', (ev) => {
     if (ev.key === 'Enter' && ev.target.id === 'st-newmem') $('[data-act="add-member"]').click();
+    // Desktop shortcuts: N = new expense, S = share. Ignored while typing or when a sheet is open.
+    if (ev.ctrlKey || ev.metaKey || ev.altKey || $('.scrim:not(.closing)')) return;
+    if (/^(INPUT|TEXTAREA|SELECT)$/.test(ev.target.tagName) || ev.target.isContentEditable) return;
+    const g = G();
+    if (!g) return;
+    const k = ev.key.toLowerCase();
+    if (k === 'n') { ev.preventDefault(); expenseSheet(g); } else if (k === 's') { ev.preventDefault(); shareSheet(g); }
   });
 
   /* ---------------- boot ---------------- */
@@ -910,7 +964,13 @@
     if (db.last && db.groups[db.last]) view.gid = db.last;
     render();
     if (!EMBED && 'serviceWorker' in navigator && location.protocol === 'https:') {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
+    }
+    // ?demo (from the landing page) opens a sample ledger, reusing one made earlier instead of piling up copies.
+    if (!EMBED && /[?&]demo\b/.test(location.search)) {
+      history.replaceState(null, '', location.pathname + location.hash);
+      const old = Object.values(db.groups).find((x) => x.name === DEMO_NAME);
+      if (old) openGroup(old.id); else demoGroup();
     }
     await handleHash();
   })();

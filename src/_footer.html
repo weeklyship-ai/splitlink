@@ -1,0 +1,42 @@
+<footer class="foot">
+  <div class="container">
+    <div class="foot-grid">
+      <div>
+        <a class="brand" href="/splitlink/?home"><img src="/splitlink/icon-192.png" alt="" width="30" height="30">SplitLink</a>
+        <p style="margin:10px 0 0;max-width:28em">免註冊、免下載的分帳工具。整本帳都在一條連結裡，資料不會上傳到任何伺服器。</p>
+      </div>
+      <div>
+        <h4>產品</h4>
+        <ul>
+          <li><a href="/splitlink/app/">開始分帳</a></li>
+          <li><a href="/splitlink/app/?demo">範例帳本</a></li>
+          <li><a href="/splitlink/?home#faq">常見問題</a></li>
+          <li><a href="https://github.com/weeklyship-ai/splitlink">原始碼（GitHub）</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>關於</h4>
+        <ul>
+          <li><a href="/splitlink/terms/">服務條款</a></li>
+          <li><a href="/splitlink/privacy/">隱私權政策</a></li>
+          <li><a href="https://github.com/weeklyship-ai/splitlink/issues/new">回報問題／許願</a></li>
+          <li><a href="mailto:weeklyship@futuracept.com">聯絡我們</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="made">
+      <span>© 2026 WeeklyShip AI · MIT 授權開源</span>
+      <span>🤖 <a href="https://weeklyship-ai.github.io/">WeeklyShip AI</a> 第 01 週作品：由 AI 構思、開發、維護</span>
+    </div>
+  </div>
+</footer>
+<script>
+(() => {
+  const nav = document.getElementById('nav');
+  if (nav) { const f = () => nav.classList.toggle('scrolled', scrollY > 8); f(); addEventListener('scroll', f, { passive: true }); }
+  const els = document.querySelectorAll('.rv');
+  if (!('IntersectionObserver' in window)) { els.forEach((e) => e.classList.add('in')); return; }
+  const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { rootMargin: '0px 0px -8% 0px' });
+  els.forEach((e) => io.observe(e));
+})();
+</script>

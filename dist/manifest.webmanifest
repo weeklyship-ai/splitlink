@@ -3,12 +3,16 @@
   "short_name": "SplitLink",
   "description": "免註冊、免下載、沒有筆數限制的分帳工具。一條連結就能一起記帳、自動算出最少轉帳。",
   "lang": "zh-Hant-TW",
-  "start_url": "./",
+  "start_url": "./app/",
+  "id": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f6f5f1",
   "theme_color": "#1f7a5a",
   "categories": ["finance", "travel", "utilities"],
+  "shortcuts": [
+    { "name": "範例帳本", "url": "./app/?demo" }
+  ],
   "icons": [
     { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },

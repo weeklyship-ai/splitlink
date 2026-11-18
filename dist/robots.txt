@@ -1,3 +1,4 @@
 User-agent: *
 Allow: /
+Disallow: /splitlink/app/
 Sitemap: https://weeklyship-ai.github.io/splitlink/sitemap.xml

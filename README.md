@@ -1,6 +1,6 @@
 # 🔗 SplitLink 分帳連結
 
-> 🤖 [WeeklyShip AI](https://github.com/weeklyship-ai) 第 1 週作品：由 AI自己構思、開發、測試、上線。
+> 🤖 [WeeklyShip AI](https://github.com/weeklyship-ai) 第 1 週作品：由 AI（Claude）自己構思、開發、測試、上線。
 
 **一條連結就能分帳。** 免註冊、免下載、免伺服器、沒有每日筆數限制。
 
@@ -28,26 +28,36 @@ v2 精簡格式（成員用索引、時間戳記用 base36 差值、平分用位
 - 10 筆帳 ≈ 800 字元
 - 100 筆帳（6 人）≈ 2,700 字元，遠低於 LINE 單則訊息 5,000 字的上限
 
-## 使用方式
+## 網站結構
 
-直接打開 `dist/index.html` 就能用（單一檔案，約 70 KB，零相依套件）。
-要讓朋友用連結開啟，需要放到任何靜態網站空間，例如 GitHub Pages、Cloudflare Pages、Netlify。
-如果是用本機檔案開啟，分享視窗會改成提供「分享碼」，朋友在首頁的「貼上連結加入」貼上即可。
+| 路徑 | 內容 |
+|---|---|
+| `/splitlink/` | 宣傳首頁（已經有帳本的人會自動進入 App；舊的 `#g=` 連結會自動轉到 App） |
+| `/splitlink/app/` | App 本體（CSS、JS 全部內嵌，單一檔案約 100 KB，零相依套件） |
+| `/splitlink/terms/`、`/splitlink/privacy/` | 服務條款、隱私權政策 |
+| `/splitlink/404.html` | 找不到頁面 |
+
+桌機版：帳目旁邊會顯示即時結算面板；快捷鍵 `N` 記一筆、`S` 分享。
 
 ## 開發
 
 ```bash
 npm test          # 單元測試（node:test，零相依套件）
-npm run serve     # http://localhost:5173 開發伺服器
-npm run build     # 打包成單一檔案 dist/index.html
+npm run serve     # http://localhost:5173/splitlink/ 開發伺服器（路徑和 GitHub Pages 相同）
+npm run build     # 打包到 dist/
 npm run deploy    # 打包並發布 dist/ 到 gh-pages 分支（GitHub Pages）
 ```
 
 ```
-src/core.js   純邏輯：分攤、餘額、結算、合併、編碼（瀏覽器與 Node 共用）
-src/app.js    介面（原生 JS，不需要建置）
-src/style.css 樣式，自動支援深色模式
-test/         分攤與結算的模糊測試、合併的交換律測試、編碼往返測試、連結長度上限測試
+src/index.html        宣傳首頁        src/app/index.html  App 外殼
+src/terms/ privacy/   法律頁面        src/404.html        找不到頁面
+src/_head/_nav/_footer.html           靜態頁面共用的片段（build 時展開）
+src/site.css          首頁與法律頁面的樣式
+src/core.js           純邏輯：分攤、餘額、結算、合併、編碼（瀏覽器與 Node 共用）
+src/app.js            App 介面（原生 JS）
+src/style.css         App 樣式，支援深色模式、桌機雙欄、動畫（遵守 prefers-reduced-motion）
+src/sw.js             Service worker：離線快取
+test/                 分攤與結算的模糊測試、合併的交換律測試、編碼往返測試、連結長度上限測試
 ```
 
 ## 隱私
